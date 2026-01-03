@@ -134,5 +134,20 @@ window.resetSemana = function() {
     }
 };
 
+// --- 6. MODO OSCURO (Ponlo aquí, al final de todo) ---
+const btnTheme = document.getElementById('theme-toggle');
+if (btnTheme) {
+    btnTheme.onclick = () => {
+        document.body.classList.toggle('dark-mode');
+        
+        // Cambiar el icono del botón
+        if (document.body.classList.contains('dark-mode')) {
+            btnTheme.innerText = "☀️";
+        } else {
+            btnTheme.innerText = "🌙";
+        }
+    };
+}
+
 // Inicialización
 inicializarGrafica();

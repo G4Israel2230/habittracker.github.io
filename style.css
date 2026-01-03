@@ -1,28 +1,36 @@
+/* 1. Definición de colores (Variables) */
 :root {
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --text: #111827;
-    --primary: #2563eb;
-    --border: #e5e7eb;
+    --bg: #f3f4f6;          /* Fondo gris clarito */
+    --card: #ffffff;        /* Tarjetas blancas */
+    --text: #111827;        /* Texto negro/gris oscuro */
+    --primary: #2563eb;     /* Azul principal */
+    --border: #e5e7eb;      /* Bordes claros */
 }
 
+/* 2. Cuando el cuerpo tenga la clase 'dark-mode' */
 .dark-mode {
-    --bg: #111827;
-    --card: #1f2937;
-    --text: #f9fafb;
-    --border: #374151;
+    --bg: #111827;          /* Fondo azul muy oscuro */
+    --card: #1f2937;        /* Tarjetas grises oscuras */
+    --text: #f9fafb;        /* Texto blanco */
+    --border: #374151;      /* Bordes oscuros */
 }
 
+/* 3. Aplicación de los colores */
 body { 
     background-color: var(--bg); 
     color: var(--text); 
-    font-family: system-ui, -apple-system, sans-serif; 
-    display: flex; justify-content: center; padding: 20px; 
+    transition: background 0.3s, color 0.3s; /* Esto hace que el cambio se vea suave */
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
 }
 
 .container { 
-    background: var(--card); padding: 2rem; border-radius: 1rem; 
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); width: 100%; max-width: 800px; 
+    background-color: var(--card); 
+    border: 1px solid var(--border);
+    /* ... el resto de tus estilos de container ... */
 }
 
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
