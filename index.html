@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo Leveling System v.6.0</title>
+    <title>SAO System Interface</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,93 +11,94 @@
 </head>
 <body>
 
-    <audio id="sfx-click" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
-    <audio id="sfx-level" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
     <audio id="sfx-menu" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
 
-    <div class="app-container">
-        <header class="main-header">
-            <div class="system-id">
+    <div id="login-screen" class="login-overlay">
+        <div class="login-box">
+            <h2 class="orbitron">INITIALIZING_SYSTEM</h2>
+            <p>INGRESE DATOS DEL JUGADOR</p>
+            <input type="text" id="reg-name" placeholder="NOMBRE (ID)">
+            <input type="number" id="reg-age" placeholder="EDAD">
+            <input type="number" id="reg-weight" placeholder="PESO (KG)">
+            <button onclick="registrarUsuario()" class="btn primary">SINCRONIZAR</button>
+        </div>
+    </div>
+
+    <div id="main-app" class="app-viewport" style="display:none;">
+        <header class="hud-header">
+            <div class="system-title">
                 <h1 class="glitch">SYSTEM_OS</h1>
-                <span id="display-date">JAN 03 2026</span>
+                <div id="display-date"></div>
             </div>
 
-            <div class="profile-section" onclick="toggleSAOMenu()">
-                <div class="user-details">
-                    <p id="user-name">CAZADOR_01</p>
-                    <small id="user-rank-text">RANK E</small>
+            <div class="sao-trigger-container">
+                <div class="sao-main-circle" onclick="toggleSAO()">
+                    <i class="fas fa-user"></i>
                 </div>
-                <div class="avatar-box">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Hunter" alt="Avatar">
-                </div>
-                <nav id="sao-menu" class="sao-nav">
-                    <div class="sao-item" onclick="abrirPerfilModal()">ESTADÍSTICAS</div>
-                    <div class="sao-item danger" onclick="location.reload()">REINICIAR</div>
+
+                <nav id="sao-menu" class="sao-hierarchy">
+                    <div class="sao-column level-1">
+                        <div class="sao-node active" onclick="showSubMenu('profile')">
+                            <i class="fas fa-id-card"></i> <span>PLAYER</span>
+                        </div>
+                        <div class="sao-node" onclick="showSubMenu('skills')">
+                            <i class="fas fa-fist-raised"></i> <span>SKILLS</span>
+                        </div>
+                        <div class="sao-node danger" onclick="cerrarSesion()">
+                            <i class="fas fa-power-off"></i> <span>LOGOUT</span>
+                        </div>
+                    </div>
+
+                    <div id="sub-menu" class="sao-column level-2">
+                        </div>
+
+                    <div id="detail-card" class="sao-detail-card">
+                        </div>
                 </nav>
             </div>
         </header>
 
-        <section class="status-bar">
-            <div class="rank-badge" id="user-rank">E</div>
-            <div class="xp-wrapper">
-                <div class="xp-header">
-                    <span>LVL <b id="user-level">1</b></span>
-                    <span><b id="current-xp">0</b> / 100 XP</span>
-                </div>
-                <div class="xp-track">
-                    <div id="xp-bar-fill" class="xp-fill"></div>
-                </div>
+        <section class="xp-hud">
+            <div class="rank-circle" id="user-rank">E</div>
+            <div class="xp-bar-container">
+                <div class="xp-text">LVL <span id="user-level">1</span> | <span id="current-xp">0</span> XP</div>
+                <div class="xp-bg"><div id="xp-bar-fill" class="xp-fill"></div></div>
             </div>
         </section>
 
-        <main class="main-grid">
-            <aside class="side-panel">
+        <main class="content-grid">
+            <aside class="control-panel">
                 <div class="module">
-                    <h2>COMANDO_INGRESO</h2>
-                    <input type="text" id="new-item-name" placeholder="NOMBRE DE MISIÓN...">
-                    
-                    <div id="diff-selector" class="diff-selector">
-                        <label>DIFICULTAD (EJER):</label>
-                        <select id="new-item-difficulty">
-                            <option value="facil">CLASE E</option>
-                            <option value="medio">CLASE C</option>
-                            <option value="dificil">CLASE S</option>
-                        </select>
-                    </div>
-
-                    <div class="button-grid">
+                    <h3>NUEVA MISIÓN</h3>
+                    <input type="text" id="new-item-name" placeholder="Descripción...">
+                    <select id="new-item-difficulty">
+                        <option value="facil">CLASE E</option>
+                        <option value="medio">CLASE C</option>
+                        <option value="dificil">CLASE S</option>
+                    </select>
+                    <div class="btn-group">
                         <button onclick="agregarEntrada('habito')" class="btn">HÁBITO</button>
                         <button onclick="agregarEntrada('ejercicio')" class="btn primary">EJERCICIO</button>
                     </div>
                 </div>
-
                 <div class="module">
-                    <h2>RADAR_DISCIPLINA</h2>
-                    <div class="chart-container">
-                        <canvas id="habitChart"></canvas>
-                    </div>
+                    <h3>DISCIPLINA</h3>
+                    <canvas id="habitChart"></canvas>
                 </div>
             </aside>
 
-            <section class="content-panel">
+            <section class="tables-panel">
                 <div class="module">
-                    <h2>LOG_HABITOS</h2>
-                    <div class="table-scroll">
+                    <h3>HÁBITOS DIARIOS</h3>
+                    <div class="scroll-table">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th align="left">MISIÓN</th>
-                                    <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th>
-                                </tr>
-                            </thead>
                             <tbody id="habits-body"></tbody>
                         </table>
                     </div>
                 </div>
-
-                <div class="module highlight">
-                    <h2>LOG_ENTRENAMIENTO</h2>
-                    <div class="table-scroll">
+                <div class="module">
+                    <h3>ENTRENAMIENTO</h3>
+                    <div class="scroll-table">
                         <table>
                             <tbody id="exercises-body"></tbody>
                         </table>
@@ -106,19 +107,6 @@
             </section>
         </main>
     </div>
-
-    <dialog id="profile-modal" class="sao-modal">
-        <div class="modal-content">
-            <h2>PLAYER_STATS</h2>
-            <div class="stats-grid">
-                <div class="stat-card"><span>STR</span><b id="stat-str">E</b></div>
-                <div class="stat-card"><span>AGI</span><b id="stat-agi">E</b></div>
-                <div class="stat-card"><span>INT</span><b id="stat-int">E</b></div>
-                <div class="stat-card"><span>VIT</span><b id="stat-vit">E</b></div>
-            </div>
-            <button onclick="cerrarPerfilModal()" class="btn">CERRAR</button>
-        </div>
-    </dialog>
 
     <script src="script.js"></script>
 </body>

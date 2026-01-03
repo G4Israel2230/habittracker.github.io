@@ -1,63 +1,85 @@
+let userData = JSON.parse(localStorage.getItem('userData')) || null;
 let habitos = JSON.parse(localStorage.getItem('habitos')) || [];
 let db = JSON.parse(localStorage.getItem('db')) || {};
 let categorias = JSON.parse(localStorage.getItem('categorias')) || {};
 let dificultades = JSON.parse(localStorage.getItem('dificultades')) || {};
-let currentLevel = 1;
-let habitChart;
 
-// Sonidos
-const sfxClick = document.getElementById('sfx-click');
-const sfxLevel = document.getElementById('sfx-level');
+// SFX
 const sfxMenu = document.getElementById('sfx-menu');
 
-function playSound(type) {
-    if(type === 'click') { sfxClick.currentTime = 0; sfxClick.play(); }
-    if(type === 'level') { sfxLevel.play(); }
-    if(type === 'menu') { sfxMenu.currentTime = 0; sfxMenu.play(); }
-}
-
 function init() {
-    setupChart();
+    if (!userData) {
+        document.getElementById('login-screen').style.display = 'flex';
+    } else {
+        iniciarApp();
+    }
+}
+
+function registrarUsuario() {
+    const name = document.getElementById('reg-name').value;
+    const age = document.getElementById('reg-age').value;
+    const weight = document.getElementById('reg-weight').value;
+
+    if (!name || !age) return alert("Faltan datos críticos");
+
+    userData = { name, age, weight, level: 1, xp: 0 };
+    localStorage.setItem('userData', JSON.stringify(userData));
+    iniciarApp();
+}
+
+function iniciarApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('display-date').innerText = new Date().toLocaleDateString();
     render();
+    setupChart();
 }
 
-function setupChart() {
-    const ctx = document.getElementById('habitChart').getContext('2d');
-    habitChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
-            datasets: [{
-                data: [0,0,0,0,0,0,0],
-                borderColor: '#00d2ff',
-                backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                pointRadius: 0
-            }]
-        },
-        options: {
-            scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: 'rgba(0,210,255,0.1)' } } },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
-
-function toggleSAOMenu() {
-    playSound('menu');
+// LÓGICA DEL MENÚ SAO
+function toggleSAO() {
+    sfxMenu.currentTime = 0; sfxMenu.play();
     document.getElementById('sao-menu').classList.toggle('active');
+    // Por defecto mostrar perfil al abrir
+    showSubMenu('profile');
 }
 
+function showSubMenu(type) {
+    const subMenu = document.getElementById('sub-menu');
+    const detailCard = document.getElementById('detail-card');
+    
+    if (type === 'profile') {
+        subMenu.innerHTML = `
+            <div class="sao-node active"><span>STATUS</span></div>
+            <div class="sao-node"><span>EQUIPMENT</span></div>
+        `;
+        detailCard.innerHTML = `
+            <h2>${userData.name.toUpperCase()}</h2>
+            <div class="detail-row"><span>LEVEL</span> <b>${userData.level}</b></div>
+            <div class="detail-row"><span>EDAD</span> <b>${userData.age}</b></div>
+            <div class="detail-row"><span>PESO</span> <b>${userData.weight} kg</b></div>
+            <div class="detail-row"><span>HP</span> <b>100 / 100</b></div>
+        `;
+    } else if (type === 'skills') {
+        subMenu.innerHTML = `<div class="sao-node active"><span>ACTIVE SKILLS</span></div>`;
+        detailCard.innerHTML = `
+            <h2>HABILIDADES</h2>
+            <p style="font-size:0.8rem">No hay habilidades desbloqueadas aún.</p>
+        `;
+    }
+}
+
+// LÓGICA DE HÁBITOS Y EJERCICIOS
 window.agregarEntrada = (tipo) => {
-    playSound('click');
-    const input = document.getElementById('new-item-name');
-    const name = input.value.trim();
+    const nameInput = document.getElementById('new-item-name');
+    const name = nameInput.value.trim();
     const dif = document.getElementById('new-item-difficulty').value;
 
     if (!name) return;
 
     let finalName = name;
     if (tipo === 'ejercicio') {
-        const base = dif === 'dificil' ? 30 : (dif === 'medio' ? 20 : 10);
-        finalName = `${name} x${base + (currentLevel * 2)}`;
+        const base = dif === 'dificil' ? 30 : 15;
+        finalName = `${name} x${base + (userData.level * 2)}`;
     }
 
     habitos.push(finalName);
@@ -66,73 +88,50 @@ window.agregarEntrada = (tipo) => {
     db[finalName] = Array(7).fill(false);
 
     save(); render();
-    input.value = "";
-};
+    nameInput.value = "";
+}
 
 function render() {
     const hb = document.getElementById('habits-body');
     const eb = document.getElementById('exercises-body');
-    const diaActual = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-
     hb.innerHTML = ''; eb.innerHTML = '';
 
+    const hoy = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
     habitos.forEach((item, idx) => {
-        const isEx = categorias[item] === 'ejercicio';
-        let row = `<tr><td>${item}</td>`;
-        
-        for (let i = 0; i < 7; i++) {
+        let row = `<tr><td width="50%">${item}</td>`;
+        for(let i=0; i<7; i++){
             const checked = db[item][i] ? 'checked' : '';
-            const isToday = i === diaActual;
-            const disabled = i !== diaActual ? 'disabled' : '';
-            row += `<td class="${isToday ? 'today' : ''}"><input type="checkbox" onchange="toggle('${item}',${i})" ${checked} ${disabled}></td>`;
+            const disabled = i !== hoy ? 'disabled' : '';
+            row += `<td><input type="checkbox" onchange="toggle('${item}',${i})" ${checked} ${disabled}></td>`;
         }
+        row += `<td><button onclick="eliminar(${idx})">×</button></td></tr>`;
         
-        row += `<td><button onclick="eliminar(${idx})" style="background:none; border:none; color:red; cursor:pointer;">×</button></td></tr>`;
-        isEx ? eb.innerHTML += row : hb.innerHTML += row;
+        categorias[item] === 'ejercicio' ? eb.innerHTML += row : hb.innerHTML += row;
     });
-    actualizarSistemas();
+    actualizarXP();
 }
 
 function toggle(item, dia) {
-    playSound('click');
     db[item][dia] = !db[item][dia];
     save(); render();
 }
 
-function actualizarSistemas() {
-    let xpTotal = 0;
-    let habitosCount = 0;
-    let diaStats = Array(7).fill(0);
-
+function actualizarXP() {
+    let totalXP = 0;
     habitos.forEach(h => {
-        if (categorias[h] === 'ejercicio') {
-            db[h].forEach(c => { if(c) xpTotal += (dificultades[h] === 'dificil' ? 10 : 5); });
-        } else {
-            habitosCount++;
-            db[h].forEach((c, i) => { if(c) diaStats[i]++; });
+        if(categorias[h] === 'ejercicio') {
+            db[h].forEach(c => { if(c) totalXP += 10; });
         }
     });
 
-    // Lógica de Nivel
-    const oldLevel = currentLevel;
-    currentLevel = Math.floor(xpTotal / 100) + 1;
-    if(currentLevel > oldLevel) playSound('level');
-
-    document.getElementById('user-level').innerText = currentLevel;
-    document.getElementById('current-xp').innerText = xpTotal % 100;
-    document.getElementById('xp-bar-fill').style.width = (xpTotal % 100) + "%";
-
-    if (habitChart) {
-        habitChart.data.datasets[0].data = diaStats.map(v => habitosCount > 0 ? (v/habitosCount)*100 : 0);
-        habitChart.update();
-    }
-}
-
-function eliminar(i) {
-    playSound('click');
-    delete db[habitos[i]];
-    habitos.splice(i, 1);
-    save(); render();
+    userData.xp = totalXP;
+    userData.level = Math.floor(totalXP / 100) + 1;
+    document.getElementById('user-level').innerText = userData.level;
+    document.getElementById('current-xp').innerText = totalXP % 100;
+    document.getElementById('xp-bar-fill').style.width = (totalXP % 100) + "%";
+    
+    localStorage.setItem('userData', JSON.stringify(userData));
 }
 
 function save() {
@@ -142,7 +141,14 @@ function save() {
     localStorage.setItem('dificultades', JSON.stringify(dificultades));
 }
 
-function abrirPerfilModal() { playSound('menu'); document.getElementById('profile-modal').showModal(); }
-function cerrarPerfilModal() { document.getElementById('profile-modal').close(); }
+function eliminar(i) {
+    habitos.splice(i, 1);
+    save(); render();
+}
+
+function cerrarSesion() {
+    localStorage.clear();
+    location.reload();
+}
 
 init();

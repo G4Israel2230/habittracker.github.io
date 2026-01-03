@@ -1,187 +1,86 @@
 :root {
+    --sao-orange: #ff9d00;
+    --sao-bg: rgba(240, 240, 240, 0.95);
+    --sao-text: #444;
     --cyan: #00d2ff;
-    --cyan-dim: rgba(0, 210, 255, 0.2);
-    --bg: #040608;
-    --panel: #0a0e14;
-    --border: rgba(0, 210, 255, 0.3);
+    --dark: #0a0c10;
 }
 
-* { box-sizing: border-box; }
 body {
-    background-color: var(--bg);
+    background: var(--dark);
     color: #fff;
     font-family: 'Rajdhani', sans-serif;
     margin: 0;
-    line-height: 1.4;
-}
-
-.app-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* --- HEADER --- */
-.main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--cyan);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
-}
-
-.glitch {
-    font-family: 'Orbitron';
-    letter-spacing: 3px;
-    color: var(--cyan);
-    margin: 0;
-}
-
-.profile-section {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    cursor: pointer;
-    position: relative;
-}
-
-.user-details { text-align: right; }
-.user-details p { margin: 0; font-family: 'Orbitron'; font-size: 0.9rem; }
-.avatar-box {
-    width: 45px; height: 45px;
-    border: 2px solid var(--cyan);
-    border-radius: 4px;
     overflow: hidden;
 }
-.avatar-box img { width: 100%; height: 100%; }
 
-/* --- SAO MENU --- */
-.sao-nav {
-    position: absolute; top: 60px; right: 0;
-    background: var(--panel);
-    border: 1px solid var(--cyan);
-    display: none; flex-direction: column;
-    z-index: 100; min-width: 160px;
+/* --- LOGIN SCREEN --- */
+.login-overlay {
+    position: fixed; inset: 0; background: var(--dark);
+    display: flex; justify-content: center; align-items: center; z-index: 10000;
 }
-.sao-nav.active { display: flex; }
-.sao-item {
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    font-family: 'Orbitron'; font-size: 0.75rem;
+.login-box {
+    background: #fff; color: #000; padding: 40px; border-radius: 5px;
+    text-align: center; width: 300px;
+}
+.login-box input {
+    width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd;
+}
+
+/* --- SAO HIERARCHY MENU --- */
+.sao-trigger-container { position: relative; }
+
+.sao-main-circle {
+    width: 50px; height: 50px; background: #fff; color: var(--sao-orange);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; cursor: pointer; border: 3px solid var(--sao-orange);
+    box-shadow: 0 0 10px rgba(255,157,0,0.4);
+}
+
+.sao-hierarchy {
+    position: absolute; top: 0; right: 70px;
+    display: none; gap: 5px; pointer-events: none;
+}
+.sao-hierarchy.active { display: flex; pointer-events: auto; }
+
+.sao-column { display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease; }
+
+.sao-node {
+    background: var(--sao-bg); color: var(--sao-text);
+    padding: 12px 25px; min-width: 140px;
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+    display: flex; align-items: center; gap: 15px;
+    cursor: pointer; font-family: 'Orbitron'; font-size: 0.8rem;
     transition: 0.2s;
 }
-.sao-item:hover { background: var(--cyan); color: #000; }
+.sao-node:hover, .sao-node.active {
+    background: var(--sao-orange); color: #fff; transform: translateX(-5px);
+}
+.sao-node.danger:hover { background: #ff4757; }
 
-/* --- STATUS BAR --- */
-.status-bar {
-    display: flex;
-    gap: 20px;
-    background: rgba(255,255,255,0.03);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+/* --- DETAIL CARD (EL CUADRO BLANCO) --- */
+.sao-detail-card {
+    background: #fff; color: #333; padding: 20px;
+    width: 250px; border-radius: 5px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: fadeIn 0.4s ease; border-top: 5px solid var(--sao-orange);
 }
+.sao-detail-card h2 { font-family: 'Orbitron'; margin: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; border-bottom: 1px dotted #eee; }
 
-.rank-badge {
-    width: 60px; height: 60px;
-    border: 3px solid var(--cyan);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron'; font-size: 2rem;
-    background: var(--cyan-dim);
-}
+/* --- HUD & GRID --- */
+.hud-header { display: flex; justify-content: space-between; padding: 20px 40px; background: rgba(0,0,0,0.5); }
+.glitch { font-family: 'Orbitron'; color: var(--cyan); margin: 0; }
 
-.xp-wrapper { flex: 1; }
-.xp-header {
-    display: flex; justify-content: space-between;
-    font-family: 'Orbitron'; font-size: 0.8rem;
-    margin-bottom: 8px;
-}
-.xp-track {
-    height: 8px; background: #000;
-    border-radius: 4px; overflow: hidden;
-    border: 1px solid var(--border);
-}
-.xp-fill {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--cyan), #fff);
-    box-shadow: 0 0 15px var(--cyan);
-    transition: 1s ease-out;
-}
+.xp-hud { display: flex; align-items: center; gap: 20px; padding: 20px 40px; }
+.rank-circle { width: 60px; height: 60px; border: 3px solid var(--cyan); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-family: 'Orbitron'; }
+.xp-bg { height: 8px; background: #222; width: 300px; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+.xp-fill { height: 100%; background: var(--cyan); width: 0%; transition: 1s; box-shadow: 0 0 10px var(--cyan); }
 
-/* --- GRID LAYOUT --- */
-.main-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 25px;
-}
+.content-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; padding: 0 40px; }
+.module { background: rgba(255,255,255,0.03); padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.module h3 { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--cyan); border-left: 3px solid var(--cyan); padding-left: 10px; }
 
-.module {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    padding: 20px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
-.module h2 {
-    font-family: 'Orbitron'; font-size: 0.7rem;
-    color: var(--cyan); margin: 0 0 15px 0;
-    border-left: 3px solid var(--cyan); padding-left: 10px;
-}
-
-/* --- TABLES --- */
-.table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { font-size: 0.7rem; color: #555; padding: 10px 5px; }
-td {
-    padding: 15px 8px;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.95rem;
-}
-
-input[type="checkbox"] {
-    width: 20px; height: 20px;
-    appearance: none; border: 1px solid var(--cyan);
-    cursor: pointer; transition: 0.2s;
-}
-input[type="checkbox"]:checked { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
-input[type="checkbox"]:disabled { opacity: 0.1; }
-
-/* --- BUTTONS & INPUTS --- */
-input[type="text"], select {
-    width: 100%; padding: 12px;
-    background: #000; border: 1px solid var(--border);
-    color: #fff; margin-bottom: 15px;
-    font-family: 'Rajdhani';
-}
-
-.button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn {
-    padding: 10px; border: 1px solid var(--cyan);
-    background: transparent; color: var(--cyan);
-    font-family: 'Orbitron'; font-size: 0.7rem;
-    cursor: pointer; transition: 0.3s;
-}
-.btn:hover { background: var(--cyan); color: #000; }
-.btn.primary { background: var(--cyan); color: #000; }
-
-/* --- MODAL --- */
-.sao-modal {
-    background: var(--bg); border: 1px solid var(--cyan);
-    color: #fff; padding: 30px; width: 90%; max-width: 450px;
-}
-.stats-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;
-}
-.stat-card {
-    background: rgba(255,255,255,0.05); padding: 15px;
-    text-align: center; border-radius: 4px;
-}
-.stat-card span { display: block; color: var(--cyan); font-size: 0.8rem; }
-.stat-card b { font-family: 'Orbitron'; font-size: 1.5rem; }
-
-@media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; }
-}
+/* ANIMACIONES */
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
