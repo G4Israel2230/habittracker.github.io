@@ -133,21 +133,23 @@
         function conectarBaseDatos(uid) {
             const habitosRef = ref(dbFirebase, 'usuarios/' + uid);
             onValue(habitosRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    window.listaHabitos = data.lista || [];
-                    window.db = data.checks || {};
-                    window.renderTable();
-                }
-            });
-        }
-
-        window.guardarEnFirebase = function() {
-            if (!usuarioActual) return;
-            set(ref(dbFirebase, 'usuarios/' + usuarioActual.uid), {
-                lista: window.listaHabitos,
-                checks: window.db
-            });
+            const data = snapshot.val();
+            if (data) {
+                window.listaHabitos = data.lista || [];
+                window.db = data.checks || {};
+                window.categorias = data.categorias || {};
+                
+                // IMPORTANTE: Esto dibuja la tabla y ejecuta actualizarCalculos() 
+                // apenas los datos llegan de Firebase.
+                window.renderTable(); 
+            } else {
+                // Si no hay datos, inicializamos vacíos pero limpiamos la interfaz
+                window.listaHabitos = [];
+                window.db = {};
+                window.categorias = {};
+                window.renderTable();
+            }
+        });
         };
     </script>
     <script src="script.js"></script>
