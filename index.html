@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Habit Tracker - Adiós Ansiedad</title>
+    <link rel="stylesheet" href="israel2026.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container" id="capture-area">
+        <div class="header-row">
+            <h1>Mi ansiedad bajó cuando dejé de improvisar</h1>
+            <button id="theme-toggle" class="btn-theme">🌙</button>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card">
+                <h2 id="progreso-total">0%</h2>
+                <p>Progreso Semanal</p>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="progresoChart"></canvas>
+            </div>
+        </div>
+
+        <div class="add-habit-zone">
+            <input type="text" id="new-habit-name" placeholder="Ej: Leer 10 min, Meditar...">
+            <button onclick="agregarHabito()" class="btn-add">Añadir Hábito</button>
+        </div>
+
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hábito</th>
+                        <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="habit-body">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <button onclick="descargarProgreso()" class="btn-download">📸 Guardar Imagen</button>
+            <button onclick="resetSemana()" class="btn-reset">Reiniciar Semana</button>
+        </div>
+    </div>
+    <script src="israel2026.js"></script>
+</body>
+</html>
