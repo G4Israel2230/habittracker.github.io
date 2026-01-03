@@ -1,8 +1,9 @@
+// Variables globales
 window.listaHabitos = [];
 window.db = {};
 let miGrafica;
 
-// --- INICIALIZAR GRÁFICA ---
+// --- 1. INICIALIZAR GRÁFICA ---
 function inicializarGrafica() {
     const ctx = document.getElementById('progresoChart').getContext('2d');
     miGrafica = new Chart(ctx, {
@@ -24,52 +25,68 @@ function inicializarGrafica() {
     });
 }
 
-// --- RENDERIZAR TABLA ---
+// --- 2. RENDERIZAR TABLA ---
 window.renderTable = function() {
     const body = document.getElementById('habit-body');
+    if (!body) return;
     body.innerHTML = '';
+    
     window.listaHabitos.forEach((habito, index) => {
         let row = `<tr><td class="habit-name">${habito}</td>`;
         for (let i = 0; i < 7; i++) {
             const checked = window.db[habito] && window.db[habito][i] ? 'checked' : '';
             row += `<td><input type="checkbox" onchange="toggleHabit('${habito}', ${i})" ${checked}></td>`;
         }
-        row += `<td><button onclick="eliminarHabito(${index})" style="color:red; background:none; border:none; cursor:pointer">×</button></td></tr>`;
+        row += `<td><button onclick="eliminarHabito(${index})" style="color:red; background:none; border:none; cursor:pointer; font-size:20px;">×</button></td></tr>`;
         body.innerHTML += row;
     });
     actualizarCalculos();
 };
 
-function toggleHabit(habito, dia) {
-    if (!window.db[habito]) window.db[habito] = Array(7).fill(false);
-    window.db[habito][dia] = !window.db[habito][dia];
-    window.guardarEnFirebase();
-}
-
-function agregarHabito() {
+// --- 3. FUNCIONES DE INTERACCIÓN ---
+window.agregarHabito = function() {
     const input = document.getElementById('new-habit-name');
-    if (!input.value.trim()) return;
+    if (!input || !input.value.trim()) return;
+
+    const nuevoHabito = input.value.trim();
     
-    // Añadimos el hábito a la lista local
-    window.listaHabitos.push(input.value);
-    window.db[input.value] = Array(7).fill(false);
+    if (!window.listaHabitos) window.listaHabitos = [];
+    window.listaHabitos.push(nuevoHabito);
     
+    if (!window.db) window.db = {};
+    window.db[nuevoHabito] = [false, false, false, false, false, false, false];
+
     input.value = "";
-    
-    // ESTA LÍNEA ES CLAVE: Envía los datos a Firebase
+
+    // Sincronizar con Firebase
     if (typeof window.guardarEnFirebase === "function") {
         window.guardarEnFirebase();
-    } else {
-        console.error("Firebase no está listo aún");
     }
-}
+    window.renderTable();
+};
 
-function eliminarHabito(index) {
-    delete window.db[window.listaHabitos[index]];
+window.toggleHabit = function(habito, dia) {
+    if (!window.db[habito]) window.db[habito] = Array(7).fill(false);
+    window.db[habito][dia] = !window.db[habito][dia];
+    
+    if (typeof window.guardarEnFirebase === "function") {
+        window.guardarEnFirebase();
+    }
+    actualizarCalculos();
+};
+
+window.eliminarHabito = function(index) {
+    const habito = window.listaHabitos[index];
+    delete window.db[habito];
     window.listaHabitos.splice(index, 1);
-    window.guardarEnFirebase();
-}
+    
+    if (typeof window.guardarEnFirebase === "function") {
+        window.guardarEnFirebase();
+    }
+    window.renderTable();
+};
 
+// --- 4. LÓGICA DE PROGRESO ---
 function actualizarCalculos() {
     let totalesDia = [0,0,0,0,0,0,0];
     let completadosTotal = 0;
@@ -84,33 +101,38 @@ function actualizarCalculos() {
     });
 
     const totalPosible = window.listaHabitos.length * 7;
-    document.getElementById('progreso-total').innerText = (totalPosible > 0 ? Math.round((completadosTotal/totalPosible)*100) : 0) + "%";
+    const porcentajeFinal = totalPosible > 0 ? Math.round((completadosTotal/totalPosible)*100) : 0;
+    
+    const elementProgreso = document.getElementById('progreso-total');
+    if (elementProgreso) elementProgreso.innerText = porcentajeFinal + "%";
     
     const datosGrafica = totalesDia.map(t => window.listaHabitos.length > 0 ? Math.round((t/window.listaHabitos.length)*100) : 0);
-    miGrafica.data.datasets[0].data = datosGrafica;
-    miGrafica.update();
-}
-
-// --- FUNCIONES EXTRA ---
-function descargarProgreso() {
-    html2canvas(document.getElementById('main-app')).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'mi-progreso.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    });
-}
-
-function resetSemana() {
-    if(confirm("¿Borrar progreso de la semana?")) {
-        window.listaHabitos.forEach(h => window.db[h] = Array(7).fill(false));
-        window.guardarEnFirebase();
+    
+    if (miGrafica) {
+        miGrafica.data.datasets[0].data = datosGrafica;
+        miGrafica.update();
     }
 }
 
-// Tema Oscuro
-document.getElementById('theme-toggle').onclick = () => {
-    document.body.classList.toggle('dark-mode');
+// --- 5. EXTRAS ---
+window.descargarProgreso = function() {
+    html2canvas(document.getElementById('main-app')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'mi-progreso-semanal.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
 };
 
+window.resetSemana = function() {
+    if(confirm("¿Quieres reiniciar el progreso de esta semana?")) {
+        window.listaHabitos.forEach(h => window.db[h] = Array(7).fill(false));
+        if (typeof window.guardarEnFirebase === "function") {
+            window.guardarEnFirebase();
+        }
+        window.renderTable();
+    }
+};
+
+// Inicialización
 inicializarGrafica();
