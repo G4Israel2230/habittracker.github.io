@@ -11,7 +11,10 @@ const misionesBase = [
 ];
 
 function inicializarGrafica() {
-    const ctx = document.getElementById('progresoChart').getContext('2d');
+    const canvas = document.getElementById('progresoChart');
+    if (!canvas) return; // Validación por seguridad
+    const ctx = canvas.getContext('2d');
+    
     miGrafica = new Chart(ctx, {
         type: 'line',
         data: {
@@ -37,15 +40,21 @@ window.renderTable = function() {
     window.listaHabitos.forEach((item, index) => {
         const tipo = window.categorias[item] || 'habito';
         const icono = tipo === 'ejercicio' ? '🏋️' : '📝';
-        let row = <tr><td class="habit-name">${icono} ${item}</td>;
+        
+        // CORREGIDO: Uso de backticks (`)
+        let row = `<tr><td class="habit-name">${icono} ${item}</td>`;
+        
         for (let i = 0; i < 7; i++) {
             const checked = window.db[item] && window.db[item][i] ? 'checked' : '';
-            row += <td><input type="checkbox" onchange="toggleHabit('${item}', ${i})" ${checked}></td>;
+            // CORREGIDO: Uso de backticks (`)
+            row += `<td><input type="checkbox" onchange="toggleHabit('${item}', ${i})" ${checked}></td>`;
         }
-        row += <td><button onclick="eliminarHabito(${index})" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>;
+        
+        // CORREGIDO: Uso de backticks (`)
+        row += `<td><button onclick="eliminarHabito(${index})" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`;
         body.innerHTML += row;
     });
-    actualizarCalculos(); // Forzar actualización de XP al renderizar
+    actualizarCalculos(); 
 };
 
 function actualizarCalculos() {
@@ -77,11 +86,17 @@ function actualizarCalculos() {
     
     document.getElementById('user-level').innerText = nivel;
     document.getElementById('current-xp').innerText = xpActual;
-    document.getElementById('xp-bar-fill').style.width = ${xpActual}%;
+    
+    // CORREGIDO: Uso de backticks (`)
+    document.getElementById('xp-bar-fill').style.width = `${xpActual}%`;
 
     actualizarRango(nivel);
     generarMisionesVisuales(nivel);
-    document.getElementById('penalty-zone').style.display = (!actividadHoy && window.listaHabitos.length > 0) ? 'block' : 'none';
+    
+    const penaltyZone = document.getElementById('penalty-zone');
+    if(penaltyZone) {
+        penaltyZone.style.display = (!actividadHoy && window.listaHabitos.length > 0) ? 'block' : 'none';
+    }
 }
 
 function actualizarRango(nivel) {
@@ -90,33 +105,38 @@ function actualizarRango(nivel) {
     if(nivel > 5) { r = "D"; c = "#4ade80"; }
     if(nivel > 10) { r = "C"; c = "#fbbf24"; }
     if(badge) {
-        badge.innerText = r; badge.style.color = c;
-        badge.style.textShadow = 0 0 15px ${c}; // Corregido: Uso de backticks
+        badge.innerText = r; 
+        badge.style.color = c;
+        // CORREGIDO: Uso de backticks (`)
+        badge.style.textShadow = `0 0 15px ${c}`; 
     }
 }
 
 window.agregarEntrada = (t) => {
-    const n = document.getElementById('new-item-name').value.trim();
+    const input = document.getElementById('new-item-name');
+    const n = input.value.trim();
     if(!n) return;
     window.listaHabitos.push(n);
     window.categorias[n] = t;
     window.db[n] = [false,false,false,false,false,false,false];
-    document.getElementById('new-item-name').value = "";
-    window.guardarEnFirebase();
+    input.value = "";
+    if (window.guardarEnFirebase) window.guardarEnFirebase();
     window.renderTable();
 };
 
 window.toggleHabit = (item, dia) => {
-    window.db[item][dia] = !window.db[item][dia];
-    window.guardarEnFirebase();
-    actualizarCalculos();
+    if (window.db[item]) {
+        window.db[item][dia] = !window.db[item][dia];
+        if (window.guardarEnFirebase) window.guardarEnFirebase();
+        actualizarCalculos();
+    }
 };
 
 window.eliminarHabito = (idx) => {
     const item = window.listaHabitos[idx];
     delete window.db[item]; delete window.categorias[item];
     window.listaHabitos.splice(idx, 1);
-    window.guardarEnFirebase();
+    if (window.guardarEnFirebase) window.guardarEnFirebase();
     window.renderTable();
 };
 
@@ -126,14 +146,19 @@ function generarMisionesVisuales(nivel) {
     lista.innerHTML = "";
     misionesBase.forEach(m => {
         const cant = Math.floor(m.base + (m.base * (nivel - 1) * 0.1));
-        lista.innerHTML += <div class="mission-item"><span>${m.nombre}</span><span class="mission-qty">${cant}</span></div>;
+        // CORREGIDO: Uso de backticks (`)
+        lista.innerHTML += `<div class="mission-item"><span>${m.nombre}</span><span class="mission-qty">${cant}</span></div>`;
     });
 }
 
 window.enviarReporte = (p) => {
-    const res = ⚡ REPORTE SISTEMA ⚡\nNivel: ${document.getElementById('user-level').innerText}\nRango: ${document.getElementById('user-rank').innerText};
-    if(p === 'whatsapp') window.open(https://wa.me/?text=${encodeURIComponent(res)}, '_blank');
-    else window.location.href = mailto:?subject=Reporte&body=${encodeURIComponent(res)};
+    // CORREGIDO: Uso de backticks (`)
+    const res = `⚡ REPORTE SISTEMA ⚡\nNivel: ${document.getElementById('user-level').innerText}\nRango: ${document.getElementById('user-rank').innerText}`;
+    
+    // CORREGIDO: Uso de backticks y comillas
+    if(p === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(res)}`, '_blank');
+    else window.location.href = `mailto:?subject=Reporte&body=${encodeURIComponent(res)}`;
 };
 
+// Se llama a iniciar
 inicializarGrafica();
