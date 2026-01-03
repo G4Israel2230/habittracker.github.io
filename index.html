@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Interface | Solo Leveling</title>
+    <title>Solo Leveling System | Real-Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,19 +14,13 @@
     <section id="login-screen" class="login-overlay">
         <div class="system-window">
             <div class="system-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="sys-title">SYSTEM ALERT</span>
+                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                <span class="sys-title">SYSTEM AUTHENTICATION</span>
             </div>
             <div class="login-content">
                 <h1>BIENVENIDO, JUGADOR</h1>
-                <p>El sistema requiere autenticación para acceder a sus funciones diarias.</p>
-                <div class="glow-box">
-                    <button id="btn-login" class="btn-system">
-                        <i class="fab fa-google"></i> SINCRONIZAR ALMA (LOGIN)
-                    </button>
-                </div>
+                <p>Sincroniza tus datos con el Nexo de Poder.</p>
+                <button id="btn-login" class="btn-system"><i class="fab fa-google"></i> ENTRAR CON GOOGLE</button>
             </div>
         </div>
     </section>
@@ -35,7 +29,8 @@
         
         <header class="top-nav">
             <div class="logo-area">
-                <i class="fas fa-dungeon"></i> <span>SL SYSTEM</span>
+                <div class="main-logo"><i class="fas fa-dungeon"></i> <span>SL SYSTEM</span></div>
+                <div id="display-date" class="system-date"></div>
             </div>
             
             <div class="user-area" onclick="toggleMenu()">
@@ -44,73 +39,72 @@
                     <span class="role-text">Jugador</span>
                 </div>
                 <img id="user-photo" src="https://via.placeholder.com/40" alt="Avatar" class="avatar-circle">
-                <i class="fas fa-chevron-down dropdown-icon"></i>
-
                 <div id="user-dropdown" class="dropdown-menu">
-                    <a href="#" onclick="abrirPerfilModal()"><i class="fas fa-user-circle"></i> Ver Estadísticas</a>
+                    <a href="#" onclick="abrirPerfilModal()"><i class="fas fa-user-circle"></i> Mi Perfil (Stats)</a>
                     <a href="#" onclick="cerrarSesion()" class="danger-text"><i class="fas fa-power-off"></i> Cerrar Sistema</a>
                 </div>
             </div>
         </header>
 
         <main class="dashboard-grid">
-            
             <section class="status-card">
                 <div class="rank-display">
                     <div id="user-rank" class="rank-circle">E</div>
-                    <span class="label">RANGO ACTUAL</span>
+                    <span class="label">RANGO</span>
                 </div>
                 <div class="xp-display">
                     <div class="level-info">
                         <span class="lvl-label">NIVEL <span id="user-level" class="highlight">1</span></span>
-                        <span class="xp-numbers"><span id="current-xp">0</span> / 100 XP</span>
+                        <span class="xp-numbers"><span id="current-xp">0</span> XP</span>
                     </div>
                     <div class="xp-track">
-                        <div id="xp-bar-fill" class="xp-fill" style="width: 0%"></div>
+                        <div id="xp-bar-fill" class="xp-fill"></div>
                     </div>
                 </div>
             </section>
 
-            <div id="penalty-zone" class="penalty-banner" style="display:none;">
-                <div class="penalty-content">
-                    <i class="fas fa-skull-crossbones"></i>
-                    <div>
-                        <h3>PENALIZACIÓN PENDIENTE</h3>
-                        <p>Completa tus tareas o serás enviado a la Zona de Castigo.</p>
-                    </div>
-                </div>
-            </div>
-
             <div class="content-columns">
                 <div class="col-left">
-                    <div class="panel glass-panel">
-                        <h3><i class="fas fa-scroll"></i> MISIONES DIARIAS</h3>
-                        <div id="daily-missions-list" class="missions-grid"></div>
-                    </div>
-
                     <div class="panel glass-panel input-panel">
-                        <div class="input-group">
-                            <input type="text" id="new-item-name" placeholder="Escribe una nueva misión...">
+                        <h3><i class="fas fa-plus-circle"></i> NUEVA MISIÓN</h3>
+                        <input type="text" id="new-item-name" placeholder="Nombre de la misión...">
+                        <div class="diff-container">
+                            <label>Dificultad:</label>
+                            <select id="new-item-difficulty">
+                                <option value="facil">Clase E (Fácil)</option>
+                                <option value="medio" selected>Clase C (Media)</option>
+                                <option value="dificil">Clase S (Difícil)</option>
+                            </select>
                         </div>
                         <div class="action-buttons">
-                            <button onclick="agregarEntrada('habito')" class="btn-action habito"><i class="fas fa-plus"></i> Hábito</button>
-                            <button onclick="agregarEntrada('ejercicio')" class="btn-action ejercicio"><i class="fas fa-dumbbell"></i> Ejercicio (+XP)</button>
+                            <button onclick="agregarEntrada('habito')" class="btn-action habito">HÁBITO</button>
+                            <button onclick="agregarEntrada('ejercicio')" class="btn-action ejercicio">EJERCICIO</button>
                         </div>
+                    </div>
+
+                    <div class="panel glass-panel">
+                        <h3><i class="fas fa-scroll"></i> OBJETIVOS</h3>
+                        <div id="daily-missions-list" class="missions-grid"></div>
                     </div>
                 </div>
 
                 <div class="col-right">
                     <div class="panel glass-panel table-panel">
+                        <h3 class="table-title habitos-color"><i class="fas fa-tasks"></i> RUTINA DE HÁBITOS</h3>
                         <div class="table-responsive">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th>Objetivo</th>
-                                        <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="habit-body"></tbody>
+                                <thead><tr><th>Misión</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
+                                <tbody id="habits-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="panel glass-panel table-panel">
+                        <h3 class="table-title ejercicios-color"><i class="fas fa-fist-raised"></i> ENTRENAMIENTO XP</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Misión</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
+                                <tbody id="exercises-body"></tbody>
                             </table>
                         </div>
                     </div>
@@ -120,12 +114,6 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="report-bar">
-                <button onclick="enviarReporte('whatsapp')" class="btn-report whatsapp"><i class="fab fa-whatsapp"></i> Reporte Diario</button>
-                <button onclick="enviarReporte('email')" class="btn-report email"><i class="fas fa-envelope"></i> Enviar Correo</button>
-            </div>
-
         </main>
     </div>
 
@@ -137,24 +125,15 @@
             </div>
             <div class="modal-body">
                 <div class="stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-label">FUERZA</span>
-                        <span class="stat-value">A+</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">AGILIDAD</span>
-                        <span class="stat-value">B</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">INTELIGENCIA</span>
-                        <span class="stat-value">S</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">VITALIDAD</span>
-                        <span class="stat-value">C+</span>
-                    </div>
+                    <div class="stat-box"><span class="stat-label">FUERZA</span><span class="stat-value" id="stat-str">E</span></div>
+                    <div class="stat-box"><span class="stat-label">AGILIDAD</span><span class="stat-value" id="stat-agi">E</span></div>
+                    <div class="stat-box"><span class="stat-label">INTELIGENCIA</span><span class="stat-value" id="stat-int">E</span></div>
+                    <div class="stat-box"><span class="stat-label">VITALIDAD</span><span class="stat-value" id="stat-vit">E</span></div>
                 </div>
-                <p class="modal-footer-text">Sigue entrenando para aumentar tus estadísticas.</p>
+                <div class="stat-box full-width">
+                    <span class="stat-label">PROGRESO TOTAL</span>
+                    <span class="stat-value" id="stat-total-xp">0 XP</span>
+                </div>
             </div>
         </div>
     </dialog>
@@ -162,22 +141,5 @@
     <audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
     <script type="module" src="firebase.js"></script>
     <script src="script.js"></script>
-    
-    <script>
-        function toggleMenu() {
-            document.getElementById('user-dropdown').classList.toggle('show');
-        }
-        // Cerrar menú si clic fuera
-        window.onclick = function(e) {
-            if (!e.target.closest('.user-area')) {
-                const dropdown = document.getElementById('user-dropdown');
-                if (dropdown && dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        }
-        function abrirPerfilModal() { document.getElementById('profile-modal').showModal(); }
-        function cerrarPerfilModal() { document.getElementById('profile-modal').close(); }
-    </script>
 </body>
 </html>
