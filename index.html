@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo Leveling System | Real-Time</title>
+    <title>Solo Leveling System | Jugador</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,86 +11,65 @@
 </head>
 <body>
 
-    <section id="login-screen" class="login-overlay">
-        <div class="system-window">
-            <div class="system-header">
-                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-                <span class="sys-title">SYSTEM AUTHENTICATION</span>
-            </div>
-            <div class="login-content">
-                <h1>BIENVENIDO, JUGADOR</h1>
-                <p>Sincroniza tus datos con el Nexo de Poder.</p>
-                <button id="btn-login" class="btn-system"><i class="fab fa-google"></i> ENTRAR CON GOOGLE</button>
-            </div>
-        </div>
-    </section>
-
-    <div id="main-app" class="app-container" style="display: none;">
-        
+    <div id="main-app" class="app-container">
         <header class="top-nav">
             <div class="logo-area">
-                <div class="main-logo"><i class="fas fa-dungeon"></i> <span>SL SYSTEM</span></div>
+                <div class="main-logo">SYSTEM_UI</div>
                 <div id="display-date" class="system-date"></div>
             </div>
             
             <div class="user-area" onclick="toggleMenu()">
                 <div class="user-info">
-                    <span id="user-name" class="name-text">Cazador</span>
-                    <span class="role-text">Jugador</span>
+                    <span id="user-name" class="name-text">CAZADOR</span>
+                    <span id="user-rank-text" class="role-text">RANGO E</span>
                 </div>
-                <img id="user-photo" src="https://via.placeholder.com/40" alt="Avatar" class="avatar-circle">
+                <img id="user-photo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky" alt="Avatar" class="avatar-circle">
                 <div id="user-dropdown" class="dropdown-menu">
-                    <a href="#" onclick="abrirPerfilModal()"><i class="fas fa-user-circle"></i> Mi Perfil (Stats)</a>
-                    <a href="#" onclick="cerrarSesion()" class="danger-text"><i class="fas fa-power-off"></i> Cerrar Sistema</a>
+                    <a href="#" onclick="abrirPerfilModal()"><i class="fas fa-chart-line"></i> Estadísticas</a>
+                    <a href="#" onclick="location.reload()" class="danger-text"><i class="fas fa-sync"></i> Reiniciar</a>
                 </div>
             </div>
         </header>
 
         <main class="dashboard-grid">
             <section class="status-card">
-                <div class="rank-display">
-                    <div id="user-rank" class="rank-circle">E</div>
-                    <span class="label">RANGO</span>
-                </div>
+                <div id="user-rank" class="rank-circle">E</div>
                 <div class="xp-display">
                     <div class="level-info">
-                        <span class="lvl-label">NIVEL <span id="user-level" class="highlight">1</span></span>
-                        <span class="xp-numbers"><span id="current-xp">0</span> XP</span>
+                        <span>NIVEL <span id="user-level" class="highlight">1</span></span>
+                        <span><span id="current-xp">0</span> XP TOTAL</span>
                     </div>
-                    <div class="xp-track">
-                        <div id="xp-bar-fill" class="xp-fill"></div>
-                    </div>
+                    <div class="xp-track"><div id="xp-bar-fill" class="xp-fill"></div></div>
                 </div>
             </section>
 
-            <div class="content-columns">
-                <div class="col-left">
-                    <div class="panel glass-panel input-panel">
-                        <h3><i class="fas fa-plus-circle"></i> NUEVA MISIÓN</h3>
-                        <input type="text" id="new-item-name" placeholder="Nombre de la misión...">
-                        <div class="diff-container">
-                            <label>Dificultad:</label>
-                            <select id="new-item-difficulty">
-                                <option value="facil">Clase E (Fácil)</option>
-                                <option value="medio" selected>Clase C (Media)</option>
-                                <option value="dificil">Clase S (Difícil)</option>
-                            </select>
-                        </div>
+            <div class="main-layout">
+                <aside class="side-panel">
+                    <div class="glass-panel">
+                        <h3><i class="fas fa-plus"></i> NUEVA MISIÓN</h3>
+                        <input type="text" id="new-item-name" placeholder="Nombre de la tarea...">
+                        <select id="new-item-difficulty">
+                            <option value="facil">CLASE E (3 XP)</option>
+                            <option value="medio">CLASE C (6 XP)</option>
+                            <option value="dificil">CLASE S (10 XP)</option>
+                        </select>
                         <div class="action-buttons">
-                            <button onclick="agregarEntrada('habito')" class="btn-action habito">HÁBITO</button>
-                            <button onclick="agregarEntrada('ejercicio')" class="btn-action ejercicio">EJERCICIO</button>
+                            <button onclick="agregarEntrada('habito')" class="btn-hab">HÁBITO</button>
+                            <button onclick="agregarEntrada('ejercicio')" class="btn-exe">EJERCICIO</button>
                         </div>
                     </div>
 
-                    <div class="panel glass-panel">
-                        <h3><i class="fas fa-scroll"></i> OBJETIVOS</h3>
-                        <div id="daily-missions-list" class="missions-grid"></div>
+                    <div class="glass-panel history-section">
+                        <h3><i class="fas fa-history"></i> CRÓNICAS</h3>
+                        <div id="weeks-history" class="history-list">
+                            <p class="empty-msg">Esperando fin de semana...</p>
+                        </div>
                     </div>
-                </div>
+                </aside>
 
-                <div class="col-right">
-                    <div class="panel glass-panel table-panel">
-                        <h3 class="table-title habitos-color"><i class="fas fa-tasks"></i> RUTINA DE HÁBITOS</h3>
+                <section class="main-content">
+                    <div class="glass-panel table-wrapper">
+                        <h3><i class="fas fa-tasks"></i> RUTINA DIARIA</h3>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Misión</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
@@ -99,20 +78,15 @@
                         </div>
                     </div>
 
-                    <div class="panel glass-panel table-panel">
-                        <h3 class="table-title ejercicios-color"><i class="fas fa-fist-raised"></i> ENTRENAMIENTO XP</h3>
+                    <div class="glass-panel table-wrapper training">
+                        <h3><i class="fas fa-dumbbell"></i> ENTRENAMIENTO</h3>
                         <div class="table-responsive">
                             <table>
-                                <thead><tr><th>Misión</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
                                 <tbody id="exercises-body"></tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="panel glass-panel chart-panel">
-                        <canvas id="progresoChart"></canvas>
-                    </div>
-                </div>
+                </section>
             </div>
         </main>
     </div>
@@ -120,26 +94,20 @@
     <dialog id="profile-modal" class="system-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>ESTADÍSTICAS DEL JUGADOR</h2>
+                <h2>ESTADÍSTICAS</h2>
                 <button onclick="cerrarPerfilModal()" class="close-btn">×</button>
             </div>
             <div class="modal-body">
                 <div class="stats-grid">
-                    <div class="stat-box"><span class="stat-label">FUERZA</span><span class="stat-value" id="stat-str">E</span></div>
-                    <div class="stat-box"><span class="stat-label">AGILIDAD</span><span class="stat-value" id="stat-agi">E</span></div>
-                    <div class="stat-box"><span class="stat-label">INTELIGENCIA</span><span class="stat-value" id="stat-int">E</span></div>
-                    <div class="stat-box"><span class="stat-label">VITALIDAD</span><span class="stat-value" id="stat-vit">E</span></div>
-                </div>
-                <div class="stat-box full-width">
-                    <span class="stat-label">PROGRESO TOTAL</span>
-                    <span class="stat-value" id="stat-total-xp">0 XP</span>
+                    <div class="stat-box"><span>FUERZA</span><b id="stat-str">E</b></div>
+                    <div class="stat-box"><span>AGILIDAD</span><b id="stat-agi">E</b></div>
+                    <div class="stat-box"><span>INTELEC.</span><b id="stat-int">E</b></div>
+                    <div class="stat-box"><span>VITALIDAD</span><b id="stat-vit">E</b></div>
                 </div>
             </div>
         </div>
     </dialog>
 
-    <audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-    <script type="module" src="firebase.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
