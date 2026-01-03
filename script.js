@@ -1,213 +1,156 @@
-// ==========================================
-// VARIABLES GLOBALES
-// ==========================================
-window.listaHabitos = []; // {id, nombre}
-window.db = {};           // id => [bool x7]
-window.categorias = {};   // id => 'habito' | 'ejercicio'
+window.listaHabitos = [];
+window.db = {};
+window.categorias = {};
 window.userStats = { xp: 0, nivel: 1 };
 
 let miGrafica;
+let ultimoNivel = 1;
 
 const misionesBase = [
-    { nombre: "Flexiones de pecho", base: 20 },
-    { nombre: "Abdominales", base: 10 },
-    { nombre: "Sentadillas", base: 20 },
+    { nombre: "Flexiones", base: 20 },
+    { nombre: "Abdominales", base: 15 },
+    { nombre: "Sentadillas", base: 25 },
     { nombre: "Correr (Km)", base: 2 }
 ];
 
-// ==========================================
-// 1. INICIALIZACIÓN DE GRÁFICA
-// ==========================================
 function inicializarGrafica() {
-    const canvas = document.getElementById('progresoChart');
-    if (!canvas) return;
+    const ctx = document.getElementById("progresoChart")?.getContext("2d");
+    if (!ctx) return;
 
-    const ctx = canvas.getContext('2d');
     miGrafica = new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
-            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            labels: ["L", "M", "X", "J", "V", "S", "D"],
             datasets: [{
-                label: '% Disciplina',
+                label: "% Disciplina",
                 data: [0,0,0,0,0,0,0],
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16,185,129,0.1)',
-                fill: true,
-                tension: 0.4
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16,185,129,0.1)",
+                fill: true
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { min: 0, max: 100 } }
+            scales: { y: { min: 0, max: 100 } },
+            responsive: true
         }
     });
 }
 
-// ==========================================
-// 2. RENDERIZADO
-// ==========================================
 window.renderTable = function () {
-    const body = document.getElementById('habit-body');
-    if (!body) return;
+    const body = document.getElementById("habit-body");
+    let html = "";
 
-    let html = '';
+    window.listaHabitos.forEach((h, i) => {
+        const icon = categorias[h.id] === "ejercicio" ? "🏋️" : "📝";
+        html += `<tr><td>${icon} ${h.nombre}</td>`;
 
-    window.listaHabitos.forEach((item, index) => {
-        const tipo = window.categorias[item.id];
-        const icono = tipo === 'ejercicio' ? '🏋️' : '📝';
-
-        html += `<tr>
-            <td class="habit-name">${icono} ${item.nombre}</td>`;
-
-        for (let i = 0; i < 7; i++) {
-            const checked = window.db[item.id][i] ? 'checked' : '';
+        for (let d = 0; d < 7; d++) {
             html += `<td>
-                <input type="checkbox" onchange="toggleHabit('${item.id}', ${i})" ${checked}>
+                <input type="checkbox" ${db[h.id][d] ? "checked" : ""}
+                onchange="toggleHabit('${h.id}',${d})">
             </td>`;
         }
 
-        html += `<td>
-            <button onclick="eliminarHabito(${index})"
-                style="color:red;background:none;border:none;font-size:20px;cursor:pointer;">×</button>
-        </td></tr>`;
+        html += `<td><button onclick="eliminarHabito(${i})">×</button></td></tr>`;
     });
 
     body.innerHTML = html;
     actualizarCalculos();
 };
 
-// ==========================================
-// 3. CÁLCULOS DE XP, NIVEL Y GRÁFICA
-// ==========================================
 function actualizarCalculos() {
-    const hoyIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-
-    let totalesDiaHabitos = [0,0,0,0,0,0,0];
+    const hoy = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
     let xpHoy = 0;
     let actividadHoy = false;
+    let totales = [0,0,0,0,0,0,0];
 
-    const soloHabitos = window.listaHabitos.filter(h => window.categorias[h.id] === 'habito');
+    const soloHabitos = listaHabitos.filter(h => categorias[h.id] === "habito");
 
-    window.listaHabitos.forEach(item => {
-        for (let i = 0; i < 7; i++) {
-            if (window.db[item.id][i]) {
-                if (window.categorias[item.id] === 'habito') {
-                    totalesDiaHabitos[i]++;
-                }
-
-                if (i === hoyIdx) {
-                    actividadHoy = true;
-                    if (window.categorias[item.id] === 'ejercicio') {
-                        xpHoy += 20;
-                    }
-                }
+    listaHabitos.forEach(h => {
+        db[h.id].forEach((v, d) => {
+            if (v && categorias[h.id] === "habito") totales[d]++;
+            if (v && d === hoy) {
+                actividadHoy = true;
+                if (categorias[h.id] === "ejercicio") xpHoy += 20;
             }
-        }
+        });
     });
 
-    // XP acumulado (NO baja)
-    window.userStats.xp += xpHoy;
-    window.userStats.nivel = Math.floor(window.userStats.xp / 100) + 1;
-    const xpActual = window.userStats.xp % 100;
+    userStats.xp += xpHoy;
+    userStats.nivel = Math.floor(userStats.xp / 100) + 1;
 
-    // UI XP
-    document.getElementById('user-level')?.innerText = window.userStats.nivel;
-    document.getElementById('current-xp')?.innerText = xpActual;
-    document.getElementById('xp-bar-fill')?.style.width = `${xpActual}%`;
+    document.getElementById("user-level").innerText = userStats.nivel;
+    document.getElementById("current-xp").innerText = userStats.xp % 100;
+    document.getElementById("xp-bar-fill").style.width = `${userStats.xp % 100}%`;
 
-    // Gráfica
+    if (userStats.nivel > ultimoNivel) {
+        document.getElementById("level-up-sound").play();
+        ultimoNivel = userStats.nivel;
+    }
+
     if (miGrafica) {
-        miGrafica.data.datasets[0].data = totalesDiaHabitos.map(v =>
-            soloHabitos.length ? Math.round((v / soloHabitos.length) * 100) : 0
-        );
+        miGrafica.data.datasets[0].data =
+            totales.map(v => soloHabitos.length ? Math.round(v / soloHabitos.length * 100) : 0);
         miGrafica.update();
     }
 
-    actualizarRango(window.userStats.nivel);
-    generarMisionesVisuales(window.userStats.nivel);
-    verificarPenalizacion(actividadHoy, soloHabitos.length);
+    document.getElementById("penalty-zone").style.display =
+        (!actividadHoy && soloHabitos.length) ? "block" : "none";
+
+    generarMisionesVisuales(userStats.nivel);
+    guardarEnFirebase();
 }
 
-// ==========================================
-// 4. RANGO
-// ==========================================
-function actualizarRango(nivel) {
-    let rango = "E", color = "#00d2ff";
-    if (nivel > 5)  { rango = "D"; color = "#4ade80"; }
-    if (nivel > 10) { rango = "C"; color = "#fbbf24"; }
-    if (nivel > 20) { rango = "B"; color = "#a78bfa"; }
-    if (nivel > 40) { rango = "A"; color = "#f87171"; }
-    if (nivel > 60) { rango = "S"; color = "#ffffff"; }
-
-    const badge = document.getElementById('user-rank');
-    if (badge) {
-        badge.innerText = rango;
-        badge.style.color = color;
-        badge.style.textShadow = `0 0 15px ${color}`;
-    }
-}
-
-// ==========================================
-// 5. CRUD DE HÁBITOS
-// ==========================================
-window.agregarEntrada = function (tipo) {
-    const input = document.getElementById('new-item-name');
-    const nombre = input.value.trim();
-    if (!nombre) return;
-
-    const id = crypto.randomUUID();
-
-    window.listaHabitos.push({ id, nombre });
-    window.categorias[id] = tipo;
-    window.db[id] = [false,false,false,false,false,false,false];
-
-    input.value = '';
-    window.guardarEnFirebase?.();
-    window.renderTable();
-};
-
-window.toggleHabit = function (id, dia) {
-    window.db[id][dia] = !window.db[id][dia];
-    window.guardarEnFirebase?.();
-    actualizarCalculos();
-};
-
-window.eliminarHabito = function (index) {
-    const id = window.listaHabitos[index].id;
-    delete window.db[id];
-    delete window.categorias[id];
-    window.listaHabitos.splice(index, 1);
-
-    window.guardarEnFirebase?.();
-    window.renderTable();
-};
-
-// ==========================================
-// 6. MISIONES Y PENALIZACIÓN
-// ==========================================
 function generarMisionesVisuales(nivel) {
-    const lista = document.getElementById('daily-missions-list');
-    if (!lista) return;
+    const cont = document.getElementById("daily-missions-list");
+    cont.innerHTML = "";
 
-    lista.innerHTML = '';
     misionesBase.forEach(m => {
-        const cant = Math.floor(m.base * (1 + (nivel - 1) * 0.1));
-        lista.innerHTML += `
+        cont.innerHTML += `
             <div class="mission-item">
-                <span>${m.nombre}</span>
-                <span class="mission-qty">${cant}</span>
+                ${m.nombre}: ${Math.floor(m.base * (1 + nivel * 0.1))}
             </div>`;
     });
 }
 
-function verificarPenalizacion(activoHoy, totalHabitos) {
-    const p = document.getElementById('penalty-zone');
-    if (!p) return;
-    p.style.display = (!activoHoy && totalHabitos > 0) ? 'block' : 'none';
-}
+window.agregarEntrada = function (tipo) {
+    const nombre = document.getElementById("new-item-name").value.trim();
+    if (!nombre) return;
 
-// ==========================================
-// INIT
-// ==========================================
+    const id = crypto.randomUUID();
+    listaHabitos.push({ id, nombre });
+    categorias[id] = tipo;
+    db[id] = [false,false,false,false,false,false,false];
+
+    document.getElementById("new-item-name").value = "";
+    renderTable();
+};
+
+window.toggleHabit = (id, d) => {
+    db[id][d] = !db[id][d];
+    actualizarCalculos();
+};
+
+window.eliminarHabito = i => {
+    const id = listaHabitos[i].id;
+    delete db[id];
+    delete categorias[id];
+    listaHabitos.splice(i, 1);
+    renderTable();
+};
+
+window.resetSemana = () => {
+    Object.keys(db).forEach(id => db[id] = [false,false,false,false,false,false,false]);
+    renderTable();
+};
+
+window.descargarProgreso = () => {
+    html2canvas(document.getElementById("main-app")).then(c => {
+        const a = document.createElement("a");
+        a.download = "progreso.png";
+        a.href = c.toDataURL();
+        a.click();
+    });
+};
+
 inicializarGrafica();

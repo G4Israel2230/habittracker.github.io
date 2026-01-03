@@ -3,155 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo Leveling: Habit Tracker</title>
+    <title>Solo Leveling – Habit Tracker</title>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-card">
-            <h1>SISTEMA DE DESPERTAR</h1>
-            <p>Inicia sesión para registrar tu nivel de cazador</p>
-            <button id="btn-login" class="btn-google">ENTRAR CON GOOGLE</button>
+<!-- LOGIN -->
+<div id="login-screen">
+    <div class="login-card">
+        <h1>SISTEMA DE DESPERTAR</h1>
+        <p>Inicia sesión para registrar tu nivel de cazador</p>
+        <button id="btn-login" class="btn-google">ENTRAR CON GOOGLE</button>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="main-app" style="display:none;">
+
+    <header>
+        <div class="user-info">
+            <img id="user-photo">
+            <span id="user-name">Cazador</span>
+        </div>
+        <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sistema</button>
+    </header>
+
+    <div class="system-status">
+        <div class="rank-container">
+            <div id="user-rank" class="rank-badge">E</div>
+            <p>RANGO</p>
+        </div>
+
+        <div class="xp-section">
+            <div class="level-header">
+                <span>NIVEL <span id="user-level">1</span></span>
+                <span><span id="current-xp">0</span> / 100 XP</span>
+            </div>
+            <div class="xp-bar-bg">
+                <div id="xp-bar-fill" class="xp-bar-fill"></div>
+            </div>
         </div>
     </div>
 
-    <div id="main-app" style="display: none;">
-        <header>
-            <div class="user-info">
-                <img id="user-photo" src="" alt="Perfil">
-                <span id="user-name">Cazador</span>
-            </div>
-            <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sistema</button>
-        </header>
+    <div id="penalty-zone" class="mission-panel penalty" style="display:none;">
+        <h3><i class="fas fa-skull"></i> MISIÓN DE PENALIZACIÓN</h3>
+        <p>No registraste actividad hoy.</p>
+    </div>
 
-        <div class="system-status">
-            <div class="rank-container">
-                <div id="user-rank" class="rank-badge">E</div>
-                <p>RANGO</p>
-            </div>
-            <div class="xp-section">
-                <div class="level-header">
-                    <span>NIVEL <span id="user-level">1</span></span>
-                    <span><span id="current-xp">0</span> / 100 XP</span>
-                </div>
-                <div class="xp-bar-bg">
-                    <div id="xp-bar-fill" class="xp-bar-fill"></div>
-                </div>
-            </div>
-        </div>
+    <div class="mission-panel">
+        <h3><i class="fas fa-bullseye"></i> MISIONES DIARIAS</h3>
+        <div id="daily-missions-list"></div>
+    </div>
 
-        <div id="penalty-zone" class="mission-panel penalty" style="display:none;">
-            <h3><i class="fas fa-skull"></i> MISIÓN DE PENALIZACIÓN ACTIVADA</h3>
-            <p>No has registrado actividad hoy. ¡Muévete o perderás progreso!</p>
-        </div>
-
-        <div class="mission-panel">
-            <h3><i class="fas fa-bullseye"></i> MISIONES DE ENTRENAMIENTO</h3>
-            <div id="daily-missions-list"></div>
-        </div>
-
-        <div class="input-section">
-            <input type="text" id="new-item-name" placeholder="Nueva misión o hábito...">
-            <div class="button-group">
-                <button onclick="agregarEntrada('habito')" class="btn-habito">+ Hábito</button>
-                <button onclick="agregarEntrada('ejercicio')" class="btn-ejercicio">+ Ejercicio (XP)</button>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Misión/Hábito</th>
-                        <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="habit-body"></tbody>
-            </table>
-        </div>
-
-        <div class="chart-container">
-            <canvas id="progresoChart"></canvas>
+    <div class="input-section">
+        <input id="new-item-name" placeholder="Nueva misión...">
+        <div class="button-group">
+            <button onclick="agregarEntrada('habito')" class="btn-habito">+ Hábito</button>
+            <button onclick="agregarEntrada('ejercicio')" class="btn-ejercicio">+ Ejercicio</button>
         </div>
     </div>
 
-    <audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
-        
-        <div class="footer">
-            <button onclick="descargarProgreso()" class="btn-download">📸 Guardar Foto</button>
-            <button onclick="resetSemana()" class="btn-reset">Reiniciar Semana</button>
-        </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Misión</th>
+                    <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="habit-body"></tbody>
+        </table>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div class="chart-container">
+        <canvas id="progresoChart"></canvas>
+    </div>
 
-        // CONFIGURACIÓN DE TU APP (Pega aquí lo que copiaste de Firebase)
-        const firebaseConfig = {
-        apiKey: "AIzaSyCvLEaBBi2hoZjnU-foJ7Vlxtazs28VdzU",
-        authDomain: "habittracker-1fabe.firebaseapp.com",
-        databaseURL: "https://habittracker-1fabe-default-rtdb.firebaseio.com",
-        projectId: "habittracker-1fabe",
-        storageBucket: "habittracker-1fabe.firebasestorage.app",
-        messagingSenderId: "684673822722",
-        appId: "1:684673822722:web:9ce1313c5a4f5b06e7771b",
-        measurementId: "G-P24MX2R69X"
-        };
+    <div class="footer">
+        <button onclick="descargarProgreso()">📸 Guardar Foto</button>
+        <button onclick="resetSemana()">♻ Reiniciar Semana</button>
+    </div>
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const dbFirebase = getDatabase(app);
-        const provider = new GoogleAuthProvider();
+<audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
 
-        let usuarioActual = null;
+<script type="module" src="firebase.js"></script>
+<script src="script.js"></script>
 
-        // Login / Logout
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
-        window.cerrarSesion = () => signOut(auth);
-
-        // Observador de estado
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                usuarioActual = user;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-name').innerText = user.displayName;
-                document.getElementById('user-photo').src = user.photoURL;
-                conectarBaseDatos(user.uid);
-            } else {
-                document.getElementById('login-screen').style.display = 'block';
-                document.getElementById('main-app').style.display = 'none';
-            }
-        });
-
-        function conectarBaseDatos(uid) {
-            const habitosRef = ref(dbFirebase, 'usuarios/' + uid);
-            onValue(habitosRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                window.listaHabitos = data.lista || [];
-                window.db = data.checks || {};
-                window.categorias = data.categorias || {};
-                
-                // IMPORTANTE: Esto dibuja la tabla y ejecuta actualizarCalculos() 
-                // apenas los datos llegan de Firebase.
-                window.renderTable(); 
-            } else {
-                // Si no hay datos, inicializamos vacíos pero limpiamos la interfaz
-                window.listaHabitos = [];
-                window.db = {};
-                window.categorias = {};
-                window.renderTable();
-            }
-        });
-        };
-    </script>
-    <script src="script.js"></script>
 </body>
 </html>
