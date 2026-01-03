@@ -43,6 +43,8 @@ window.renderTable = function() {
     actualizarCalculos();
 };
 
+
+
 // --- 3. FUNCIONES DE INTERACCIÓN ---
 window.agregarHabito = function() {
     const input = document.getElementById('new-habit-name');
@@ -87,31 +89,76 @@ window.eliminarHabito = function(index) {
 };
 
 // --- 4. LÓGICA DE PROGRESO ---
+const misionesBase = [
+    { id: 'pushups', nombre: "Flexiones de pecho", base: 20 },
+    { id: 'abs', nombre: "Abdominales", base: 10 },
+    { id: 'squats', nombre: "Sentadillas", base: 20 },
+    { id: 'run', nombre: "Correr (Km)", base: 2 }
+];
+
 function actualizarCalculos() {
-    let totalesDia = [0,0,0,0,0,0,0];
-    let completadosTotal = 0;
+    let totalChecks = 0;
+    let diasActivos = 0;
     
-    window.listaHabitos.forEach(habito => {
-        for (let i = 0; i < 7; i++) {
-            if (window.db[habito] && window.db[habito][i]) {
-                totalesDia[i]++;
-                completadosTotal++;
-            }
-        }
+    // Calcular XP (10 XP por cada cuadrito marcado)
+    Object.values(window.db).forEach(dias => {
+        dias.forEach(check => { if(check) totalChecks++; });
     });
 
-    const totalPosible = window.listaHabitos.length * 7;
-    const porcentajeFinal = totalPosible > 0 ? Math.round((completadosTotal/totalPosible)*100) : 0;
-    
-    const elementProgreso = document.getElementById('progreso-total');
-    if (elementProgreso) elementProgreso.innerText = porcentajeFinal + "%";
-    
-    const datosGrafica = totalesDia.map(t => window.listaHabitos.length > 0 ? Math.round((t/window.listaHabitos.length)*100) : 0);
-    
-    if (miGrafica) {
-        miGrafica.data.datasets[0].data = datosGrafica;
-        miGrafica.update();
+    let xpTotal = totalChecks * 10;
+    let nivel = Math.floor(xpTotal / 100) + 1;
+    let xpActual = xpTotal % 100;
+
+    // 1. Manejar Subida de Nivel
+    let nivelGuardado = localStorage.getItem('sys_level') || 1;
+    if (nivel > nivelGuardado) {
+        document.getElementById('level-up-sound').play();
+        alert("¡SISTEMA: HAS SUBIDO DE NIVEL!\nTu fuerza aumenta, la dificultad sube.");
+        localStorage.setItem('sys_level', nivel);
     }
+
+    // 2. Renderizar Misiones Escalables
+    const listaMisiones = document.getElementById('daily-missions-list');
+    listaMisiones.innerHTML = "";
+    
+    misionesBase.forEach(m => {
+        // Aumenta 10% por cada nivel
+        let cantidad = Math.floor(m.base + (m.base * (nivel - 1) * 0.1));
+        listaMisiones.innerHTML += `
+            <div class="mission-item">
+                <span>${m.nombre}</span>
+                <span class="mission-qty">${cantidad}</span>
+            </div>
+        `;
+    });
+
+    // 3. Sistema de Penalización (Si no hay checks hoy)
+    const hoy = new Date().getDay(); // 0-6 (Dom-Sab)
+    let haHechoAlgoHoy = false;
+    Object.values(window.db).forEach(dias => {
+        if(dias[hoy === 0 ? 6 : hoy - 1]) haHechoAlgoHoy = true;
+    });
+
+    const panelPenalizacion = document.getElementById('penalty-zone');
+    if (!haHechoAlgoHoy && totalChecks > 0) {
+        panelPenalizacion.style.display = 'block';
+    } else {
+        panelPenalizacion.style.display = 'none';
+    }
+
+    // 4. Actualizar Rango
+    let rango = "E";
+    if(nivel > 5) rango = "D";
+    if(nivel > 10) rango = "C";
+    if(nivel > 20) rango = "B";
+    if(nivel > 40) rango = "A";
+    if(nivel > 60) rango = "S";
+
+    // 5. UI
+    document.getElementById('user-level').innerText = nivel;
+    document.getElementById('user-rank').innerText = rango;
+    document.getElementById('current-xp').innerText = xpActual;
+    document.getElementById('xp-bar-fill').style.width = xpActual + "%";
 }
 
 // --- 5. EXTRAS ---

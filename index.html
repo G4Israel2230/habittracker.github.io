@@ -43,6 +43,36 @@
             <button onclick="agregarHabito()" class="btn-add">Añadir</button>
         </div>
 
+        <div class="system-status">
+    <div class="rank-container">
+        <div id="user-rank" class="rank-badge">E</div>
+        <p>RANGO</p>
+    </div>
+    <div class="xp-section">
+        <div class="level-header">
+            <span>NIVEL <span id="user-level">1</span></span>
+            <span id="current-xp">0</span> / <span id="next-level-xp">100</span> XP
+        </div>
+        <div class="xp-bar-bg">
+            <div id="xp-bar-fill" class="xp-bar-fill"></div>
+        </div>
+    </div>
+</div>
+
+<div id="penalty-zone" class="mission-panel penalty" style="display:none;">
+    <h3 class="mission-title"><i class="fas fa-skull"></i> MISIÓN DE PENALIZACIÓN: SOBREVIVIR</h3>
+    <p>Has fallado en tus misiones diarias. Completa el doble de ejercicio para escapar.</p>
+</div>
+
+<div class="mission-panel" id="normal-missions">
+    <h3 class="mission-title"><i class="fas fa-exclamation-circle"></i> MISIONES DE SUPERACIÓN</h3>
+    <div id="daily-missions-list">
+        </div>
+    <div class="system-warning">ADVERTENCIA: Si no completas las misiones, se activará la penalización.</div>
+</div>
+
+<audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+
         <div class="table-scroll">
             <table>
                 <thead>
