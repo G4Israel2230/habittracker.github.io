@@ -117,7 +117,7 @@
             });
         }
 
-        window.guardarEnNube = function() {
+        window.guardarEnFirebase = function() {
             if (!usuarioActual) return;
             set(ref(dbFirebase, 'usuarios/' + usuarioActual.uid), {
                 lista: window.listaHabitos,
