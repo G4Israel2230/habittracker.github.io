@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Habit Tracker - Adiós Ansiedad</title>
-    <link rel="stylesheet" href="israel2026.css">
+    <title>Master Habit Tracker - Cloud</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="container" id="capture-area">
+    <div id="login-screen" class="container" style="text-align: center; margin-top: 50px;">
+        <h1>Mi ansiedad bajó cuando dejé de improvisar</h1>
+        <p>Inicia sesión para sincronizar tus resultados diarios</p>
+        <button id="btn-login" class="btn-google">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+            Entrar con Google
+        </button>
+    </div>
+
+    <div id="main-app" class="container" style="display: none;">
         <div class="header-row">
-            <h1>Mi ansiedad bajó cuando dejé de improvisar</h1>
+            <div class="user-profile">
+                <img id="user-photo" src="" alt="Perfil">
+                <span id="user-name"></span>
+                <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sesión</button>
+            </div>
             <button id="theme-toggle" class="btn-theme">🌙</button>
         </div>
         
@@ -26,29 +39,91 @@
         </div>
 
         <div class="add-habit-zone">
-            <input type="text" id="new-habit-name" placeholder="Ej: Leer 10 min, Meditar...">
-            <button onclick="agregarHabito()" class="btn-add">Añadir Hábito</button>
+            <input type="text" id="new-habit-name" placeholder="Ej: Gym, Meditar, Leer...">
+            <button onclick="agregarHabito()" class="btn-add">Añadir</button>
         </div>
 
         <div class="table-scroll">
             <table>
                 <thead>
                     <tr>
-                        <th>Hábito</th>
+                        <th>Mis Hábitos</th>
                         <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
                         <th></th>
                     </tr>
                 </thead>
-                <tbody id="habit-body">
-                    </tbody>
+                <tbody id="habit-body"></tbody>
             </table>
         </div>
         
         <div class="footer">
-            <button onclick="descargarProgreso()" class="btn-download">📸 Guardar Imagen</button>
+            <button onclick="descargarProgreso()" class="btn-download">📸 Guardar Foto</button>
             <button onclick="resetSemana()" class="btn-reset">Reiniciar Semana</button>
         </div>
     </div>
-    <script src="israel2026.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // CONFIGURACIÓN DE TU APP (Pega aquí lo que copiaste de Firebase)
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            databaseURL: "https://TU_PROYECTO.firebaseio.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const dbFirebase = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        let usuarioActual = null;
+
+        // Login / Logout
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        window.cerrarSesion = () => signOut(auth);
+
+        // Observador de estado
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                usuarioActual = user;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('user-name').innerText = user.displayName;
+                document.getElementById('user-photo').src = user.photoURL;
+                conectarBaseDatos(user.uid);
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('main-app').style.display = 'none';
+            }
+        });
+
+        function conectarBaseDatos(uid) {
+            const habitosRef = ref(dbFirebase, 'usuarios/' + uid);
+            onValue(habitosRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    window.listaHabitos = data.lista || [];
+                    window.db = data.checks || {};
+                    window.renderTable();
+                }
+            });
+        }
+
+        window.guardarEnNube = function() {
+            if (!usuarioActual) return;
+            set(ref(dbFirebase, 'usuarios/' + usuarioActual.uid), {
+                lista: window.listaHabitos,
+                checks: window.db
+            });
+        };
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
