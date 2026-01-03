@@ -49,10 +49,19 @@ function toggleHabit(habito, dia) {
 function agregarHabito() {
     const input = document.getElementById('new-habit-name');
     if (!input.value.trim()) return;
+    
+    // Añadimos el hábito a la lista local
     window.listaHabitos.push(input.value);
     window.db[input.value] = Array(7).fill(false);
+    
     input.value = "";
-    window.guardarEnFirebase();
+    
+    // ESTA LÍNEA ES CLAVE: Envía los datos a Firebase
+    if (typeof window.guardarEnFirebase === "function") {
+        window.guardarEnFirebase();
+    } else {
+        console.error("Firebase no está listo aún");
+    }
 }
 
 function eliminarHabito(index) {
