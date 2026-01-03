@@ -3,84 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo Leveling System | Jugador</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>Solo Leveling HUD v.5.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="system-theme">
 
-    <div id="main-app" class="app-container">
-        <header class="top-nav">
-            <div class="logo-area">
-                <div class="main-logo">SYSTEM_UI</div>
-                <div id="display-date" class="system-date"></div>
+    <audio id="sfx-click" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="sfx-level" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <audio id="sfx-menu" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+    <div id="main-app" class="app-viewport">
+        <header class="hud-header">
+            <div class="header-left">
+                <div class="scanner-line"></div>
+                <h1 class="glitch-text" data-text="SYSTEM_INTERFACE">SYSTEM_INTERFACE</h1>
+                <div id="display-date" class="date-tag"></div>
             </div>
             
-            <div class="user-area" onclick="toggleMenu()">
-                <div class="user-info">
-                    <span id="user-name" class="name-text">CAZADOR</span>
-                    <span id="user-rank-text" class="role-text">RANGO E</span>
+            <div class="user-profile-trigger" onclick="toggleSAOMenu()">
+                <div class="user-meta">
+                    <span id="user-name">PLAYER_01</span>
+                    <span id="user-rank-text">RANK E</span>
                 </div>
-                <img id="user-photo" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky" alt="Avatar" class="avatar-circle">
-                <div id="user-dropdown" class="dropdown-menu">
-                    <a href="#" onclick="abrirPerfilModal()"><i class="fas fa-chart-line"></i> Estadísticas</a>
-                    <a href="#" onclick="location.reload()" class="danger-text"><i class="fas fa-sync"></i> Reiniciar</a>
+                <div class="avatar-frame">
+                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Hunter" alt="Avatar">
                 </div>
+                
+                <nav id="sao-menu" class="sao-menu">
+                    <div class="menu-item" onclick="abrirPerfilModal()">
+                        <i class="fas fa-user-shield"></i> <span>ESTADÍSTICAS</span>
+                    </div>
+                    <div class="menu-item danger" onclick="location.reload()">
+                        <i class="fas fa-power-off"></i> <span>DESCONECTAR</span>
+                    </div>
+                </nav>
             </div>
         </header>
 
-        <main class="dashboard-grid">
-            <section class="status-card">
-                <div id="user-rank" class="rank-circle">E</div>
-                <div class="xp-display">
-                    <div class="level-info">
-                        <span>NIVEL <span id="user-level" class="highlight">1</span></span>
-                        <span><span id="current-xp">0</span> XP TOTAL</span>
+        <main class="hud-grid">
+            <section class="xp-module">
+                <div class="rank-box" id="user-rank">E</div>
+                <div class="progress-area">
+                    <div class="level-tag">LVL <span id="user-level">1</span></div>
+                    <div class="xp-container">
+                        <div id="xp-bar-fill" class="xp-bar"></div>
+                        <div class="xp-glow"></div>
                     </div>
-                    <div class="xp-track"><div id="xp-bar-fill" class="xp-fill"></div></div>
+                    <div class="xp-data"><span id="current-xp">0</span> / 100 XP</div>
                 </div>
             </section>
 
-            <div class="main-layout">
-                <aside class="side-panel">
-                    <div class="glass-panel">
-                        <h3><i class="fas fa-plus"></i> NUEVA MISIÓN</h3>
-                        <input type="text" id="new-item-name" placeholder="Nombre de la tarea...">
-                        <select id="new-item-difficulty">
-                            <option value="facil">CLASE E (3 XP)</option>
-                            <option value="medio">CLASE C (6 XP)</option>
-                            <option value="dificil">CLASE S (10 XP)</option>
-                        </select>
-                        <div class="action-buttons">
-                            <button onclick="agregarEntrada('habito')" class="btn-hab">HÁBITO</button>
-                            <button onclick="agregarEntrada('ejercicio')" class="btn-exe">EJERCICIO</button>
+            <div class="layout-body">
+                <aside class="control-panel">
+                    <div class="module-box">
+                        <div class="module-title">COMANDO_INGRESO</div>
+                        <input type="text" id="new-item-name" placeholder="IDENTIFICAR MISIÓN...">
+                        
+                        <div id="diff-box" class="difficulty-box">
+                            <label>DIFICULTAD (EJER):</label>
+                            <select id="new-item-difficulty">
+                                <option value="facil">CLASE_E</option>
+                                <option value="medio">CLASE_C</option>
+                                <option value="dificil">CLASE_S</option>
+                            </select>
+                        </div>
+
+                        <div class="btn-group">
+                            <button onclick="agregarEntrada('habito')" class="btn-ui">HÁBITO</button>
+                            <button onclick="agregarEntrada('ejercicio')" class="btn-ui special">EJERCICIO</button>
                         </div>
                     </div>
 
-                    <div class="glass-panel history-section">
-                        <h3><i class="fas fa-history"></i> CRÓNICAS</h3>
-                        <div id="weeks-history" class="history-list">
-                            <p class="empty-msg">Esperando fin de semana...</p>
-                        </div>
+                    <div class="module-box graph-box">
+                        <div class="module-title">DATA_VISUAL_DISCIPLINA</div>
+                        <canvas id="habitChart"></canvas>
                     </div>
                 </aside>
 
-                <section class="main-content">
-                    <div class="glass-panel table-wrapper">
-                        <h3><i class="fas fa-tasks"></i> RUTINA DIARIA</h3>
-                        <div class="table-responsive">
+                <section class="missions-panel">
+                    <div class="module-box">
+                        <div class="module-title">LOG_HABITOS</div>
+                        <div class="table-container">
                             <table>
-                                <thead><tr><th>Misión</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
+                                <thead><tr><th>MISIÓN</th><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th><th></th></tr></thead>
                                 <tbody id="habits-body"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div class="glass-panel table-wrapper training">
-                        <h3><i class="fas fa-dumbbell"></i> ENTRENAMIENTO</h3>
-                        <div class="table-responsive">
+                    <div class="module-box training-box">
+                        <div class="module-title">LOG_ENTRENAMIENTO</div>
+                        <div class="table-container">
                             <table>
                                 <tbody id="exercises-body"></tbody>
                             </table>
@@ -91,20 +107,16 @@
         </main>
     </div>
 
-    <dialog id="profile-modal" class="system-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>ESTADÍSTICAS</h2>
-                <button onclick="cerrarPerfilModal()" class="close-btn">×</button>
+    <dialog id="profile-modal" class="modal-sao">
+        <div class="modal-inner">
+            <h2 class="orbitron">PLAYER_STATS</h2>
+            <div class="stats-list">
+                <div class="s-box"><span>STR</span><b id="stat-str">E</b></div>
+                <div class="s-box"><span>AGI</span><b id="stat-agi">E</b></div>
+                <div class="s-box"><span>INT</span><b id="stat-int">E</b></div>
+                <div class="s-box"><span>VIT</span><b id="stat-vit">E</b></div>
             </div>
-            <div class="modal-body">
-                <div class="stats-grid">
-                    <div class="stat-box"><span>FUERZA</span><b id="stat-str">E</b></div>
-                    <div class="stat-box"><span>AGILIDAD</span><b id="stat-agi">E</b></div>
-                    <div class="stat-box"><span>INTELEC.</span><b id="stat-int">E</b></div>
-                    <div class="stat-box"><span>VITALIDAD</span><b id="stat-vit">E</b></div>
-                </div>
-            </div>
+            <button onclick="cerrarPerfilModal()" class="btn-close">CERRAR</button>
         </div>
     </dialog>
 
