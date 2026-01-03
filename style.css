@@ -126,3 +126,24 @@ input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--prim
 }
 
 .mission-qty { color: #ff0055; font-weight: bold; }
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-habito {
+    background: #10b981; /* Verde esmeralda para disciplina */
+    color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; flex: 1;
+}
+
+.btn-ejercicio {
+    background: #3b82f6; /* Azul eléctrico para poder/XP */
+    color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; flex: 1;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.btn-habito:hover { background: #059669; }
+.btn-ejercicio:hover { background: #2563eb; box-shadow: 0 0 15px #3b82f6; }

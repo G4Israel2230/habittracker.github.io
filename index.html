@@ -3,81 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Habit Tracker - Cloud</title>
+    <title>Solo Leveling: Habit Tracker</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div id="login-screen" class="container" style="text-align: center; margin-top: 50px;">
-        <h1>Mi ansiedad bajó cuando dejé de improvisar</h1>
-        <p>Inicia sesión para sincronizar tus resultados diarios</p>
-        <button id="btn-login" class="btn-google">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
-            Entrar con Google
-        </button>
+
+    <div id="login-screen">
+        <div class="login-card">
+            <h1>SISTEMA DE DESPERTAR</h1>
+            <p>Inicia sesión para registrar tu nivel de cazador</p>
+            <button id="btn-login" class="btn-google">ENTRAR CON GOOGLE</button>
+        </div>
     </div>
 
-    <div id="main-app" class="container" style="display: none;">
-        <div class="header-row">
-            <div class="user-profile">
+    <div id="main-app" style="display: none;">
+        <header>
+            <div class="user-info">
                 <img id="user-photo" src="" alt="Perfil">
-                <span id="user-name"></span>
-                <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sesión</button>
+                <span id="user-name">Cazador</span>
             </div>
-            <button id="theme-toggle" class="btn-theme">🌙</button>
-        </div>
-        
-        <div class="stats-container">
-            <div class="stat-card">
-                <h2 id="progreso-total">0%</h2>
-                <p>Progreso Semanal</p>
-            </div>
-            <div class="chart-wrapper">
-                <canvas id="progresoChart"></canvas>
-            </div>
-        </div>
-
-        <div class="add-habit-zone">
-            <input type="text" id="new-habit-name" placeholder="Ej: Gym, Meditar, Leer...">
-            <button onclick="agregarHabito()" class="btn-add">Añadir</button>
-        </div>
+            <button onclick="cerrarSesion()" class="btn-logout">Cerrar Sistema</button>
+        </header>
 
         <div class="system-status">
-    <div class="rank-container">
-        <div id="user-rank" class="rank-badge">E</div>
-        <p>RANGO</p>
-    </div>
-    <div class="xp-section">
-        <div class="level-header">
-            <span>NIVEL <span id="user-level">1</span></span>
-            <span id="current-xp">0</span> / <span id="next-level-xp">100</span> XP
+            <div class="rank-container">
+                <div id="user-rank" class="rank-badge">E</div>
+                <p>RANGO</p>
+            </div>
+            <div class="xp-section">
+                <div class="level-header">
+                    <span>NIVEL <span id="user-level">1</span></span>
+                    <span><span id="current-xp">0</span> / 100 XP</span>
+                </div>
+                <div class="xp-bar-bg">
+                    <div id="xp-bar-fill" class="xp-bar-fill"></div>
+                </div>
+            </div>
         </div>
-        <div class="xp-bar-bg">
-            <div id="xp-bar-fill" class="xp-bar-fill"></div>
+
+        <div id="penalty-zone" class="mission-panel penalty" style="display:none;">
+            <h3><i class="fas fa-skull"></i> MISIÓN DE PENALIZACIÓN ACTIVADA</h3>
+            <p>No has registrado actividad hoy. ¡Muévete o perderás progreso!</p>
         </div>
-    </div>
-</div>
 
-<div id="penalty-zone" class="mission-panel penalty" style="display:none;">
-    <h3 class="mission-title"><i class="fas fa-skull"></i> MISIÓN DE PENALIZACIÓN: SOBREVIVIR</h3>
-    <p>Has fallado en tus misiones diarias. Completa el doble de ejercicio para escapar.</p>
-</div>
-
-<div class="mission-panel" id="normal-missions">
-    <h3 class="mission-title"><i class="fas fa-exclamation-circle"></i> MISIONES DE SUPERACIÓN</h3>
-    <div id="daily-missions-list">
+        <div class="mission-panel">
+            <h3><i class="fas fa-bullseye"></i> MISIONES DE ENTRENAMIENTO</h3>
+            <div id="daily-missions-list"></div>
         </div>
-    <div class="system-warning">ADVERTENCIA: Si no completas las misiones, se activará la penalización.</div>
-</div>
 
-<audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+        <div class="input-section">
+            <input type="text" id="new-item-name" placeholder="Nueva misión o hábito...">
+            <div class="button-group">
+                <button onclick="agregarEntrada('habito')" class="btn-habito">+ Hábito</button>
+                <button onclick="agregarEntrada('ejercicio')" class="btn-ejercicio">+ Ejercicio (XP)</button>
+            </div>
+        </div>
 
-        <div class="table-scroll">
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Mis Hábitos</th>
+                        <th>Misión/Hábito</th>
                         <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
                         <th></th>
                     </tr>
@@ -85,6 +73,13 @@
                 <tbody id="habit-body"></tbody>
             </table>
         </div>
+
+        <div class="chart-container">
+            <canvas id="progresoChart"></canvas>
+        </div>
+    </div>
+
+    <audio id="level-up-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
         
         <div class="footer">
             <button onclick="descargarProgreso()" class="btn-download">📸 Guardar Foto</button>
