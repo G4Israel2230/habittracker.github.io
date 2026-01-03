@@ -1,156 +1,135 @@
+// ===============================
+// VARIABLES GLOBALES
+// ===============================
 window.listaHabitos = [];
 window.db = {};
 window.categorias = {};
 window.userStats = { xp: 0, nivel: 1 };
 
-let miGrafica;
-let ultimoNivel = 1;
+const XP_POR_EJERCICIO = 20;
 
-const misionesBase = [
-    { nombre: "Flexiones", base: 20 },
-    { nombre: "Abdominales", base: 15 },
-    { nombre: "Sentadillas", base: 25 },
-    { nombre: "Correr (Km)", base: 2 }
-];
+// ===============================
+// AGREGAR HÁBITO / EJERCICIO
+// ===============================
+window.agregarEntrada = function (tipo) {
+    const input = document.getElementById("new-item-name");
+    const nombre = input.value.trim();
 
-function inicializarGrafica() {
-    const ctx = document.getElementById("progresoChart")?.getContext("2d");
-    if (!ctx) return;
+    if (!nombre) return;
 
-    miGrafica = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: ["L", "M", "X", "J", "V", "S", "D"],
-            datasets: [{
-                label: "% Disciplina",
-                data: [0,0,0,0,0,0,0],
-                borderColor: "#10b981",
-                backgroundColor: "rgba(16,185,129,0.1)",
-                fill: true
-            }]
-        },
-        options: {
-            scales: { y: { min: 0, max: 100 } },
-            responsive: true
-        }
-    });
-}
+    const id = Date.now().toString();
 
-window.renderTable = function () {
-    const body = document.getElementById("habit-body");
-    let html = "";
+    listaHabitos.push({ id, nombre, tipo });
+    categorias[id] = tipo;
 
-    window.listaHabitos.forEach((h, i) => {
-        const icon = categorias[h.id] === "ejercicio" ? "🏋️" : "📝";
-        html += `<tr><td>${icon} ${h.nombre}</td>`;
+    if (tipo === "ejercicio") {
+        sumarXP(XP_POR_EJERCICIO);
+    }
 
-        for (let d = 0; d < 7; d++) {
-            html += `<td>
-                <input type="checkbox" ${db[h.id][d] ? "checked" : ""}
-                onchange="toggleHabit('${h.id}',${d})">
-            </td>`;
-        }
-
-        html += `<td><button onclick="eliminarHabito(${i})">×</button></td></tr>`;
-    });
-
-    body.innerHTML = html;
-    actualizarCalculos();
+    input.value = "";
+    guardarEnFirebase();
+    renderTable();
 };
 
-function actualizarCalculos() {
-    const hoy = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-    let xpHoy = 0;
-    let actividadHoy = false;
-    let totales = [0,0,0,0,0,0,0];
-
-    const soloHabitos = listaHabitos.filter(h => categorias[h.id] === "habito");
+// ===============================
+// RENDER TABLA
+// ===============================
+window.renderTable = function () {
+    const tbody = document.getElementById("habit-body");
+    tbody.innerHTML = "";
 
     listaHabitos.forEach(h => {
-        db[h.id].forEach((v, d) => {
-            if (v && categorias[h.id] === "habito") totales[d]++;
-            if (v && d === hoy) {
-                actividadHoy = true;
-                if (categorias[h.id] === "ejercicio") xpHoy += 20;
-            }
-        });
+        const tr = document.createElement("tr");
+
+        const tdNombre = document.createElement("td");
+        tdNombre.textContent = h.nombre;
+        tr.appendChild(tdNombre);
+
+        for (let d = 0; d < 7; d++) {
+            const td = document.createElement("td");
+            const chk = document.createElement("input");
+            chk.type = "checkbox";
+
+            const key = h.id + "_" + d;
+            chk.checked = db[key] || false;
+
+            chk.onchange = () => {
+                db[key] = chk.checked;
+                guardarEnFirebase();
+            };
+
+            td.appendChild(chk);
+            tr.appendChild(td);
+        }
+
+        const tdDel = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.textContent = "❌";
+        btn.onclick = () => eliminarHabito(h.id);
+        tdDel.appendChild(btn);
+        tr.appendChild(tdDel);
+
+        tbody.appendChild(tr);
     });
 
-    userStats.xp += xpHoy;
-    userStats.nivel = Math.floor(userStats.xp / 100) + 1;
+    actualizarUI();
+};
 
-    document.getElementById("user-level").innerText = userStats.nivel;
-    document.getElementById("current-xp").innerText = userStats.xp % 100;
-    document.getElementById("xp-bar-fill").style.width = `${userStats.xp % 100}%`;
+// ===============================
+// ELIMINAR
+// ===============================
+function eliminarHabito(id) {
+    listaHabitos = listaHabitos.filter(h => h.id !== id);
 
-    if (userStats.nivel > ultimoNivel) {
+    Object.keys(db).forEach(k => {
+        if (k.startsWith(id)) delete db[k];
+    });
+
+    delete categorias[id];
+    guardarEnFirebase();
+    renderTable();
+}
+
+// ===============================
+// XP Y NIVEL
+// ===============================
+function sumarXP(xp) {
+    userStats.xp += xp;
+
+    while (userStats.xp >= 100) {
+        userStats.xp -= 100;
+        userStats.nivel++;
         document.getElementById("level-up-sound").play();
-        ultimoNivel = userStats.nivel;
     }
 
-    if (miGrafica) {
-        miGrafica.data.datasets[0].data =
-            totales.map(v => soloHabitos.length ? Math.round(v / soloHabitos.length * 100) : 0);
-        miGrafica.update();
-    }
-
-    document.getElementById("penalty-zone").style.display =
-        (!actividadHoy && soloHabitos.length) ? "block" : "none";
-
-    generarMisionesVisuales(userStats.nivel);
     guardarEnFirebase();
 }
 
-function generarMisionesVisuales(nivel) {
-    const cont = document.getElementById("daily-missions-list");
-    cont.innerHTML = "";
-
-    misionesBase.forEach(m => {
-        cont.innerHTML += `
-            <div class="mission-item">
-                ${m.nombre}: ${Math.floor(m.base * (1 + nivel * 0.1))}
-            </div>`;
-    });
+function actualizarUI() {
+    document.getElementById("user-level").innerText = userStats.nivel;
+    document.getElementById("current-xp").innerText = userStats.xp;
+    document.getElementById("xp-bar-fill").style.width = userStats.xp + "%";
 }
 
-window.agregarEntrada = function (tipo) {
-    const nombre = document.getElementById("new-item-name").value.trim();
-    if (!nombre) return;
-
-    const id = crypto.randomUUID();
-    listaHabitos.push({ id, nombre });
-    categorias[id] = tipo;
-    db[id] = [false,false,false,false,false,false,false];
-
-    document.getElementById("new-item-name").value = "";
+// ===============================
+// REINICIAR SEMANA
+// ===============================
+window.resetSemana = function () {
+    db = {};
+    guardarEnFirebase();
     renderTable();
 };
 
-window.toggleHabit = (id, d) => {
-    db[id][d] = !db[id][d];
-    actualizarCalculos();
-};
-
-window.eliminarHabito = i => {
-    const id = listaHabitos[i].id;
-    delete db[id];
-    delete categorias[id];
-    listaHabitos.splice(i, 1);
-    renderTable();
-};
-
-window.resetSemana = () => {
-    Object.keys(db).forEach(id => db[id] = [false,false,false,false,false,false,false]);
-    renderTable();
-};
-
-window.descargarProgreso = () => {
-    html2canvas(document.getElementById("main-app")).then(c => {
-        const a = document.createElement("a");
-        a.download = "progreso.png";
-        a.href = c.toDataURL();
-        a.click();
+// ===============================
+// GUARDAR IMAGEN (ARREGLADO)
+// ===============================
+window.descargarProgreso = function () {
+    html2canvas(document.body, {
+        scale: 1
+    }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "progreso.png";
+        link.href = canvas.toDataURL();
+        link.click();
     });
 };
-
-inicializarGrafica();
