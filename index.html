@@ -3,70 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAO System | Firebase</title>
+    <title>Solo Leveling System | Calendar V.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <div id="login-screen" class="login-overlay">
         <div class="login-box">
-            <h2 class="orbitron">LINK START</h2>
+            <h2 class="orbitron">SYSTEM LINK</h2>
             <button id="btn-login" class="google-btn">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/02/2x/google_light.png" alt="G" width="20">
-                Iniciar sesión con Google
+                <span>INICIAR CON GOOGLE</span>
             </button>
             
-            <div id="registration-form" style="display:none; margin-top:20px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <p style="font-size: 0.8rem; color: #666;">COMPLETAR PERFIL DE CAZADOR</p>
+            <div id="registration-form" style="display:none; margin-top:20px; border-top:1px solid #333; padding-top:20px;">
+                <p style="color:#aaa; font-size:0.8rem;">DATOS DE CAZADOR REQUERIDOS</p>
                 <input type="number" id="reg-age" placeholder="Edad">
-                <input type="text" id="reg-nat" placeholder="Nacionalidad">
-                <button onclick="completarRegistro()" class="btn-sao-confirm">SINCRONIZAR DATOS</button>
+                <input type="text" id="reg-nat" placeholder="Nacionalidad (Ej: JPN)">
+                <button onclick="completarRegistro()" class="btn-hud primary" style="width:100%">SINCRONIZAR</button>
             </div>
         </div>
     </div>
 
     <div id="main-app" class="app-viewport" style="display:none;">
+        
         <header class="hud-header">
-            <div class="system-id">
+            <div class="system-info">
                 <h1 class="glitch">SYSTEM_OS</h1>
-                <div id="display-date"></div>
+                <div id="display-date" class="date-display"></div>
             </div>
 
-            <div class="sao-menu-container">
-                <div class="sao-trigger" onclick="toggleSAO()">
-                    <div class="avatar-wrapper">
-                        <img id="user-photo" src="" alt="User">
-                    </div>
+            <div class="sao-menu-wrapper">
+                <div class="avatar-trigger" onclick="toggleSAO()">
+                    <img id="user-photo" src="https://via.placeholder.com/50" alt="User">
                 </div>
 
                 <nav id="sao-menu" class="sao-v-menu">
                     <div class="sao-item" onclick="toggleSub('profile')">
-                        <i class="fas fa-user"></i> <span>PLAYER: <b id="user-name">...</b></span>
+                        <i class="fas fa-user-circle"></i> <span>PLAYER</span>
                     </div>
                     <div id="sub-profile" class="sao-sub-panel">
-                        <div class="profile-card">
-                            <p>Edad: <span id="disp-age">-</span></p>
-                            <p>Nación: <span id="disp-nat">-</span></p>
-                            <p>Rango: <span id="disp-rank">E</span></p>
-                        </div>
+                        <h3 id="p-name" style="color:var(--sao-orange)">NOMBRE</h3>
+                        <p>EDAD: <b id="p-age">-</b></p>
+                        <p>NACIONALIDAD: <b id="p-nat">-</b></p>
+                        <p>ESTADO: <b id="p-status" style="color:#0f0">VIVO</b></p>
                     </div>
 
                     <div class="sao-item" onclick="toggleSub('guild')">
-                        <i class="fas fa-shield-alt"></i> <span>GUILD</span>
+                        <i class="fas fa-shield-alt"></i> <span>GREMIO</span>
                     </div>
                     <div id="sub-guild" class="sao-sub-panel">
-                        <div class="info-card">Gremio: Solo Player</div>
+                        <p>Gremio: <b>SOLO PLAYER</b></p>
                     </div>
 
                     <div class="sao-item" onclick="toggleSub('friends')">
-                        <i class="fas fa-users"></i> <span>FRIENDS</span>
+                        <i class="fas fa-user-plus"></i> <span>AMIGOS</span>
                     </div>
                     <div id="sub-friends" class="sao-sub-panel">
-                        <input type="text" placeholder="ID de amigo..." class="sao-input">
-                        <button class="btn-sao-small">BUSCAR</button>
+                        <input type="text" placeholder="ID Cazador..." class="mini-input">
+                        <button class="btn-mini">BUSCAR</button>
                     </div>
 
                     <div class="sao-item logout" onclick="cerrarSesion()">
@@ -77,43 +75,85 @@
         </header>
 
         <main class="main-layout">
-            <section class="top-section">
-                <div class="module chart-module">
-                    <h3 class="orbitron">RADAR_DISCIPLINA</h3>
-                    <canvas id="habitChart"></canvas>
-                </div>
-                <div class="module input-module">
-                    <h3 class="orbitron">NUEVA_ENTRADA</h3>
-                    <input type="text" id="new-item-name" placeholder="Nombre de misión...">
-                    <select id="new-item-difficulty">
-                        <option value="facil">CLASE E (5 XP)</option>
-                        <option value="medio">CLASE C (15 XP)</option>
-                        <option value="dificil">CLASE S (30 XP)</option>
-                    </select>
-                    <div class="btn-row">
-                        <button onclick="agregarEntrada('habito')" class="btn-hud">HÁBITO</button>
-                        <button onclick="agregarEntrada('ejercicio')" class="btn-hud primary">EJERCICIO</button>
+            
+            <section class="dashboard-grid">
+                <div class="module chart-box">
+                    <h3 class="orbitron">RADAR_STATS</h3>
+                    <div style="height:250px; display:flex; justify-content:center;">
+                        <canvas id="habitChart"></canvas>
                     </div>
-                    <div class="xp-display">
-                        <span>LVL <b id="user-level">1</b></span>
-                        <div class="xp-bar-bg"><div id="xp-bar-fill" class="xp-bar-fill"></div></div>
+                </div>
+
+                <div class="module control-box">
+                    <h3 class="orbitron">STATUS_&_MISIONES</h3>
+                    
+                    <div class="hp-container">
+                        <div class="hp-label">
+                            <span>HP (VITALIDAD)</span>
+                            <span><b id="user-hp">100</b> / 100</span>
+                        </div>
+                        <div class="hp-track">
+                            <div id="hp-bar-fill" class="hp-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="xp-container">
+                        <div class="xp-label">
+                            <span>NIVEL <b id="user-level">1</b></span>
+                            <span>XP</span>
+                        </div>
+                        <div class="xp-track">
+                            <div id="xp-bar-fill" class="xp-fill"></div>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:rgba(255,255,255,0.1); margin: 20px 0;">
+
+                    <input type="text" id="new-item-name" placeholder="Nueva misión...">
+                    <div class="input-row">
+                        <select id="new-item-difficulty">
+                            <option value="facil">Rango E (5 XP)</option>
+                            <option value="medio">Rango C (15 XP)</option>
+                            <option value="dificil">Rango S (30 XP)</option>
+                        </select>
+                        <div class="btn-group">
+                            <button onclick="agregarEntrada('habito')" class="btn-hud">HÁBITO</button>
+                            <button onclick="agregarEntrada('ejercicio')" class="btn-hud primary">ENTRENO</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <section class="tables-section">
+                
+                <div class="module calendar-nav">
+                    <button onclick="cambiarSemana(-1)" class="btn-nav"><i class="fas fa-chevron-left"></i></button>
+                    <div class="date-range">
+                        <h2 class="orbitron" id="week-display">CARGANDO...</h2>
+                    </div>
+                    <button onclick="cambiarSemana(1)" class="btn-nav"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
                 <div class="module">
-                    <h3 class="orbitron">DIARIO_HABITOS</h3>
-                    <div class="table-scroll">
-                        <table><tbody id="habits-body"></tbody></table>
+                    <h3 class="orbitron" style="color:var(--system-cyan)">DIARIO_HÁBITOS</h3>
+                    <div class="table-responsive">
+                        <table id="habits-table">
+                            <thead></thead>
+                            <tbody id="habits-body"></tbody>
+                        </table>
                     </div>
                 </div>
+
                 <div class="module">
-                    <h3 class="orbitron">ENTRENAMIENTO</h3>
-                    <div class="table-scroll">
-                        <table><tbody id="exercises-body"></tbody></table>
+                    <h3 class="orbitron" style="color:var(--sao-orange)">REGISTRO_ENTRENAMIENTO</h3>
+                    <div class="table-responsive">
+                        <table id="exercises-table">
+                            <thead></thead>
+                            <tbody id="exercises-body"></tbody>
+                        </table>
                     </div>
                 </div>
+
             </section>
         </main>
     </div>
