@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// --- CONFIGURACIÓN FIREBASE ---
+// --- 1. TU CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCvLEaBBi2hoZjnU-foJ7Vlxtazs28VdzU",
     authDomain: "habittracker-1fabe.firebaseapp.com",
@@ -18,26 +18,131 @@ const auth = getAuth(app);
 const dbFirebase = getDatabase(app);
 const provider = new GoogleAuthProvider();
 
-// --- ESTADO GLOBAL ---
+// --- 2. VARIABLES GLOBALES ---
 let usuarioActual = null;
 let habitChart = null;
-let fechaReferencia = new Date(); // Controla la semana que ves
+let fechaReferencia = new Date(); // Controla la semana visible en el calendario
 
+// Inicializamos objetos vacíos para evitar errores antes de cargar Firebase
 window.userStats = { xp: 0, nivel: 1, hp: 100, edad: "-", nacionalidad: "-", status: "ALIVE" };
 window.listaHabitos = [];
-window.db = {};
+window.db = {}; // Ahora será un objeto de fechas: { "Habito": { "2023-10-01": true } }
 window.categorias = {};
 
-// --- LOGIN & AUTH ---
-document.getElementById("btn-login").onclick = () => signInWithPopup(auth, provider);
+// =========================================================
+//  3. FUNCIONES GLOBALES (ACCESIBLES DESDE HTML)
+// =========================================================
+
+// Login y Logout
+window.iniciarSesion = () => signInWithPopup(auth, provider);
 window.cerrarSesion = () => signOut(auth).then(() => location.reload());
+
+// Navegación del Calendario
+window.cambiarSemana = (dir) => {
+    fechaReferencia.setDate(fechaReferencia.getDate() + (dir * 7));
+    renderCalendar();
+};
+
+// Añadir nueva misión
+window.agregarEntrada = (tipo) => {
+    const input = document.getElementById("new-item-name");
+    const nombre = input.value.trim();
+    
+    if (!nombre) return alert("Escribe un nombre para la misión");
+    if (!usuarioActual) return alert("Debes iniciar sesión primero");
+
+    window.listaHabitos.push(nombre);
+    window.categorias[nombre] = tipo;
+    
+    // Inicializamos el objeto en la DB local
+    if(!window.db[nombre]) window.db[nombre] = {};
+
+    input.value = "";
+    guardarEnFirebase();
+    console.log("Misión añadida:", nombre);
+};
+
+// Marcar/Desmarcar casilla (Lógica Principal)
+window.toggleCheck = (nombre, fechaStr) => {
+    if (!usuarioActual) return;
+
+    if (!window.db[nombre]) window.db[nombre] = {};
+    
+    // Invertir valor
+    const estadoAnterior = window.db[nombre][fechaStr] || false;
+    window.db[nombre][fechaStr] = !estadoAnterior;
+
+    // Lógica de XP y Vida Inmediata
+    const esEjercicio = window.categorias[nombre] === 'ejercicio';
+    
+    if (window.db[nombre][fechaStr]) {
+        // Al marcar
+        if (esEjercicio) window.userStats.xp += 10;
+        // Pequeña curación si la vida está baja
+        if (window.userStats.hp < 100) window.userStats.hp = Math.min(100, window.userStats.hp + 1);
+    } else {
+        // Al desmarcar
+        if (esEjercicio) window.userStats.xp = Math.max(0, window.userStats.xp - 10);
+    }
+
+    // Calcular Nivel (cada 100 XP sube nivel)
+    window.userStats.nivel = Math.floor(window.userStats.xp / 100) + 1;
+
+    guardarEnFirebase();
+    updateUIStats(); // Actualizar barras de vida/xp
+    renderCalendar(); // Refrescar tabla
+};
+
+window.eliminarHabito = (idx) => {
+    if(!confirm("¿Borrar esta misión y su historial?")) return;
+    const nombre = window.listaHabitos[idx];
+    
+    window.listaHabitos.splice(idx, 1);
+    if(window.db[nombre]) delete window.db[nombre];
+    if(window.categorias[nombre]) delete window.categorias[nombre];
+    
+    guardarEnFirebase();
+};
+
+// Registro de datos faltantes
+window.completarRegistro = () => {
+    const age = document.getElementById("reg-age").value;
+    const nat = document.getElementById("reg-nat").value;
+    if (age && nat) {
+        window.userStats.edad = age;
+        window.userStats.nacionalidad = nat;
+        guardarEnFirebase();
+        mostrarApp();
+    }
+};
+
+// Menú SAO Desplegable
+window.toggleSAO = () => document.getElementById("sao-menu").classList.toggle("active");
+window.toggleSub = (id) => document.getElementById("sub-" + id).classList.toggle("open");
+
+
+// =========================================================
+//  4. LÓGICA DE FIREBASE Y ESTADOS
+// =========================================================
+
+function guardarEnFirebase() {
+    if (!usuarioActual) return;
+    set(ref(dbFirebase, "usuarios/" + usuarioActual.uid), {
+        lista: window.listaHabitos,
+        checks: window.db,
+        categorias: window.categorias,
+        stats: window.userStats
+    });
+}
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
         usuarioActual = user;
-        document.getElementById("user-photo").src = user.photoURL;
+        console.log("Usuario conectado:", user.displayName);
         
-        // Listener de Datos en Tiempo Real
+        const img = document.getElementById("user-photo");
+        if(img) img.src = user.photoURL;
+
         const userRef = ref(dbFirebase, "usuarios/" + user.uid);
         onValue(userRef, (snapshot) => {
             const data = snapshot.val();
@@ -48,15 +153,14 @@ onAuthStateChanged(auth, (user) => {
                 window.db = data.checks || {};
                 window.categorias = data.categorias || {};
                 window.userStats = { ...window.userStats, ...data.stats };
-
-                // Verificar si faltan datos de perfil
+                
                 if (!window.userStats.edad || window.userStats.edad === "-") {
                     mostrarRegistro();
                 } else {
                     mostrarApp();
                 }
             } else {
-                // Nuevo usuario
+                // Usuario nuevo
                 mostrarRegistro();
             }
         });
@@ -65,6 +169,10 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById("main-app").style.display = "none";
     }
 });
+
+// =========================================================
+//  5. RENDERIZADO Y LÓGICA VISUAL (CALENDARIO & HP)
+// =========================================================
 
 function mostrarRegistro() {
     document.getElementById("login-screen").style.display = "flex";
@@ -76,93 +184,85 @@ function mostrarApp() {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("main-app").style.display = "block";
     
-    // UI Update
+    // Info Perfil
     document.getElementById("p-name").innerText = usuarioActual.displayName;
     document.getElementById("p-age").innerText = window.userStats.edad;
     document.getElementById("p-nat").innerText = window.userStats.nacionalidad;
-    document.getElementById("p-status").innerText = window.userStats.hp > 0 ? "VIVO" : "CRÍTICO";
-    document.getElementById("p-status").style.color = window.userStats.hp > 0 ? "#0f0" : "#f00";
 
-    // Inicializar sistemas
-    checkHPLogic();
+    checkSurvivalLogic(); // Verificar si perdió vida por inactividad
     if (!habitChart) initChart();
     renderCalendar();
 }
 
-window.completarRegistro = () => {
-    const age = document.getElementById("reg-age").value;
-    const nat = document.getElementById("reg-nat").value;
-    if (age && nat) {
-        window.userStats.edad = age;
-        window.userStats.nacionalidad = nat;
-        window.guardarEnFirebase();
-    }
-};
-
-// --- LÓGICA DE HP Y XP ---
-function checkHPLogic() {
-    // 1. Calcular daño por inactividad
+// Lógica "Hardcore": Calcular daño por días ausentes
+function checkSurvivalLogic() {
     const hoy = new Date().setHours(0,0,0,0);
     const ultima = window.userStats.ultimaConexion || hoy;
+    
+    // Diferencia en días
     const diasAusente = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
 
     if (diasAusente > 0) {
-        // Daño: 5 HP por cada día que no entraste
+        // Daño: 5 HP por cada día perdido
         const dano = diasAusente * 5;
         window.userStats.hp = Math.max(0, window.userStats.hp - dano);
-        if(dano > 0) alert(`⚠️ ALERTA DE SISTEMA ⚠️\nEstuviste ausente ${diasAusente} días.\nHas recibido ${dano} de daño.`);
+        
+        if(dano > 0) {
+            alert(`⚠️ REPORTE DE SISTEMA ⚠️\nEstuviste ausente ${diasAusente} días.\nTu HP se redujo en -${dano}.`);
+        }
     }
 
-    // Actualizar fecha
-    window.userStats.ultimaConexion = hoy;
-    
-    // UI HP
-    const hpBar = document.getElementById("hp-bar-fill");
-    hpBar.style.width = window.userStats.hp + "%";
-    document.getElementById("user-hp").innerText = window.userStats.hp;
-    
-    if(window.userStats.hp <= 30) hpBar.classList.add("low-hp");
-    else hpBar.classList.remove("low-hp");
-
-    // UI XP
-    document.getElementById("user-level").innerText = window.userStats.nivel;
-    document.getElementById("xp-bar-fill").style.width = (window.userStats.xp % 100) + "%";
-
-    window.guardarEnFirebase();
+    window.userStats.ultimaConexion = hoy; // Actualizar última conexión a hoy
+    guardarEnFirebase();
+    updateUIStats();
 }
 
-// --- CALENDARIO Y TABLAS ---
-window.cambiarSemana = (dir) => {
-    fechaReferencia.setDate(fechaReferencia.getDate() + (dir * 7));
-    renderCalendar();
-};
+function updateUIStats() {
+    // Barra de Vida
+    const hpBar = document.getElementById("hp-bar-fill");
+    if(hpBar) {
+        hpBar.style.width = window.userStats.hp + "%";
+        if(window.userStats.hp <= 30) hpBar.classList.add("low-hp");
+        else hpBar.classList.remove("low-hp");
+    }
+    const hpText = document.getElementById("user-hp");
+    if(hpText) hpText.innerText = Math.floor(window.userStats.hp);
 
+    // Barra de XP y Nivel
+    const xpBar = document.getElementById("xp-bar-fill");
+    if(xpBar) xpBar.style.width = (window.userStats.xp % 100) + "%";
+    
+    const lvlText = document.getElementById("user-level");
+    if(lvlText) lvlText.innerText = window.userStats.nivel;
+}
+
+// Función auxiliar para obtener el Lunes de la semana visible
 function getMonday(d) {
     d = new Date(d);
     let day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
     return new Date(d.setDate(diff));
 }
 
+// EL CORAZÓN DEL CALENDARIO
 function renderCalendar() {
     const monday = getMonday(fechaReferencia);
     const diasSemana = [];
     
-    // Generar días de la semana seleccionada
+    // Generar los 7 objetos Date de la semana actual
     for (let i = 0; i < 7; i++) {
         let d = new Date(monday);
         d.setDate(monday.getDate() + i);
         diasSemana.push(d);
     }
 
-    // Actualizar Texto de Rango
+    // Actualizar texto del rango de fechas
     const fmt = { month: 'short', day: 'numeric' };
-    document.getElementById("week-display").innerText = 
-        `${diasSemana[0].toLocaleDateString('es-ES', fmt)} - ${diasSemana[6].toLocaleDateString('es-ES', fmt)}`;
+    const display = document.getElementById("week-display");
+    if(display) display.innerText = `${diasSemana[0].toLocaleDateString('es-ES', fmt)} - ${diasSemana[6].toLocaleDateString('es-ES', fmt)}`;
 
-    // Headers
+    // Generar Encabezados de Tabla (Lun 4, Mar 5...)
     const daysNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
     let headerHTML = `<tr><th>MISIÓN</th>`;
-    
     const todayStr = new Date().toISOString().split('T')[0];
 
     diasSemana.forEach((d, i) => {
@@ -175,105 +275,59 @@ function renderCalendar() {
     });
     headerHTML += `<th></th></tr>`;
 
-    document.querySelector("#habits-table thead").innerHTML = headerHTML;
-    document.querySelector("#exercises-table thead").innerHTML = headerHTML;
+    // Inyectar Headers
+    const hHead = document.querySelector("#habits-table thead");
+    const eHead = document.querySelector("#exercises-table thead");
+    if(hHead) hHead.innerHTML = headerHTML;
+    if(eHead) eHead.innerHTML = headerHTML;
 
-    // Body
+    // Generar Cuerpos de Tabla (Checkboxes)
     const hb = document.getElementById("habits-body");
     const eb = document.getElementById("exercises-body");
-    hb.innerHTML = ""; eb.innerHTML = "";
+    if(hb) hb.innerHTML = ""; 
+    if(eb) eb.innerHTML = "";
 
     window.listaHabitos.forEach((nombre, idx) => {
-        let row = `<tr><td>${nombre}</td>`;
+        let row = `<tr><td class="task-name">${nombre}</td>`;
         
         diasSemana.forEach(fecha => {
             const fStr = fecha.toISOString().split('T')[0];
-            const isChecked = window.db[nombre] && window.db[nombre][fStr] ? "checked" : "";
+            
+            // Verificar si está marcado en la DB
+            const isChecked = (window.db[nombre] && window.db[nombre][fStr]) ? "checked" : "";
             const isToday = fStr === todayStr;
-            // Bloquear días futuros
-            const isFuture = fecha > new Date();
-            const disabled = isFuture ? "disabled" : "";
-
+            const isFuture = fecha > new Date(); // Bloquear futuro
+            
+            // Creamos el checkbox con la función toggleCheck(nombre, '2023-10-05')
             row += `<td class="${isToday ? 'today-col' : ''}">
-                <input type="checkbox" onchange="toggleCheck('${nombre}', '${fStr}')" ${isChecked} ${disabled}>
+                <input type="checkbox" onchange="toggleCheck('${nombre}', '${fStr}')" ${isChecked} ${isFuture ? 'disabled' : ''}>
             </td>`;
         });
 
-        row += `<td><button onclick="eliminarHabito(${idx})" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`;
+        row += `<td><button onclick="eliminarHabito(${idx})" class="btn-del">×</button></td></tr>`;
 
-        if (window.categorias[nombre] === 'ejercicio') eb.innerHTML += row;
-        else hb.innerHTML += row;
+        if (window.categorias[nombre] === 'ejercicio') {
+            if(eb) eb.innerHTML += row;
+        } else {
+            if(hb) hb.innerHTML += row;
+        }
     });
 
-    updateChart();
+    updateChart(diasSemana);
 }
-
-window.toggleCheck = (nombre, fecha) => {
-    if (!window.db[nombre]) window.db[nombre] = {};
-    const estadoAnterior = window.db[nombre][fecha];
-    window.db[nombre][fecha] = !estadoAnterior;
-
-    // Lógica XP / Daño Inmediato (Opcional)
-    const esEjercicio = window.categorias[nombre] === 'ejercicio';
-    if (window.db[nombre][fecha]) {
-        // Marcado
-        if (esEjercicio) window.userStats.xp += 10;
-        // Recuperar un poco de vida si cumple
-        if (window.userStats.hp < 100) window.userStats.hp = Math.min(100, window.userStats.hp + 2);
-    } else {
-        // Desmarcado
-        if (esEjercicio) window.userStats.xp -= 10;
-    }
-
-    // Nivel Up
-    window.userStats.nivel = Math.floor(window.userStats.xp / 100) + 1;
-    
-    window.guardarEnFirebase();
-    checkHPLogic(); // Refrescar UI
-};
-
-window.agregarEntrada = (tipo) => {
-    const input = document.getElementById("new-item-name");
-    const nombre = input.value.trim();
-    if (!nombre) return;
-
-    window.listaHabitos.push(nombre);
-    window.categorias[nombre] = tipo;
-    input.value = "";
-    window.guardarEnFirebase();
-};
-
-window.eliminarHabito = (idx) => {
-    const nombre = window.listaHabitos[idx];
-    if(confirm("¿Borrar " + nombre + "?")) {
-        window.listaHabitos.splice(idx, 1);
-        delete window.db[nombre];
-        delete window.categorias[nombre];
-        window.guardarEnFirebase();
-    }
-};
-
-window.guardarEnFirebase = () => {
-    if (!usuarioActual) return;
-    set(ref(dbFirebase, "usuarios/" + usuarioActual.uid), {
-        lista: window.listaHabitos,
-        checks: window.db,
-        categorias: window.categorias,
-        stats: window.userStats
-    });
-    // Forzar re-render para ver cambios
-    renderCalendar();
-};
 
 // --- GRÁFICA RADAR ---
 function initChart() {
-    const ctx = document.getElementById('habitChart').getContext('2d');
+    const canvas = document.getElementById('habitChart');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
     habitChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
             datasets: [{
-                label: 'Disciplina Semanal',
+                label: 'Disciplina',
                 data: [0,0,0,0,0,0,0],
                 borderColor: '#00d2ff',
                 backgroundColor: 'rgba(0, 210, 255, 0.2)',
@@ -281,45 +335,31 @@ function initChart() {
             }]
         },
         options: {
-            scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.1)' } } },
+            scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: 'white' } } },
             plugins: { legend: { display: false } }
         }
     });
 }
 
-function updateChart() {
+function updateChart(diasSemana) {
     if (!habitChart) return;
     
-    // Calcular % de completado por día de la semana ACTUAL mostrada
-    const monday = getMonday(fechaReferencia);
     const data = [];
-    
-    for(let i=0; i<7; i++) {
-        let d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        let fStr = d.toISOString().split('T')[0];
-        
+    diasSemana.forEach(fecha => {
+        let fStr = fecha.toISOString().split('T')[0];
         let total = 0, checks = 0;
+        
         window.listaHabitos.forEach(h => {
-            // Solo contamos hábitos, no ejercicios (opcional)
-            if(window.categorias[h] !== 'ejercicio') {
+            // Solo contamos hábitos para la gráfica de consistencia
+            if(window.categorias[h] !== 'ejercicio') { 
                 total++;
                 if(window.db[h] && window.db[h][fStr]) checks++;
             }
         });
         
         data.push(total > 0 ? (checks/total)*100 : 0);
-    }
+    });
     
     habitChart.data.datasets[0].data = data;
     habitChart.update();
 }
-
-// --- MENU TOGGLE ---
-window.toggleSAO = () => {
-    document.getElementById("sao-menu").classList.toggle("active");
-};
-window.toggleSub = (id) => {
-    const el = document.getElementById("sub-" + id);
-    el.classList.toggle("open");
-};
